@@ -10,11 +10,11 @@ namespace CleanBrowsing_Enforcer
         static string navMessage = "";
         static int navIndex = 0;
         static Option[] options = {
-            new Option("CleanBrowsing Filter", ["adult", "family", "secure", "auto"]),
+            new Option("DNS Filter", ["adult", "family", "secure", "auto"]),
             new Option("Enable SafeSearch", ["yes", "no"]),
             new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),
-            new Option("Save", SaveOptions),
             new Option("Execute", SaveOptions),
+            new Option("Exit", () => Environment.Exit(0)),
         };
         static ValueTuple<int, int> initialPos = Console.GetCursorPosition();
         static Config config = Config.Instance;
@@ -40,7 +40,6 @@ namespace CleanBrowsing_Enforcer
                     options[navIndex].Select(keyInfo);
             }
         }
-
         static void PrintNav()
         {
             Console.SetCursorPosition(initialPos.Item1, initialPos.Item2);
@@ -77,7 +76,7 @@ namespace CleanBrowsing_Enforcer
         {
             foreach (Option option in options)
                 config.Write(option.Name, option.ToString());
-            navMessage = "Configuration saved!";
+            navMessage = "Enforcer initialized!";
         }
     }
 }

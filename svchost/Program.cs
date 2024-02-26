@@ -2,14 +2,17 @@ using Microsoft.Win32.TaskScheduler;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Reflection;
+using Task = System.Threading.Tasks.Task;
 
 
 namespace svchost
 {
     internal static class Program
     {
+        static bool enforcementTaskRunning = false;
         static Config config = Config.Instance;
         static List<FileStream> filePadlocks = new List<FileStream>();
+
 
         [STAThread]
         static void Main()
@@ -23,15 +26,14 @@ namespace svchost
             }
         }
 
-
         static void registerTask()
         {
-            using (var ts = new TaskService())
+            using (var taskService = new TaskService())
             {
-                var task = ts.GetTask("SvcHost Manager");
+                var task = taskService.GetTask("SvcHost Manager");
                 if (task == null)
                 {
-                    var taskDefinition = ts.NewTask();
+                    var taskDefinition = taskService.NewTask();
                     taskDefinition.RegistrationInfo.Description = "Ensures critical Windows SvcHost processes are running.";
                     taskDefinition.RegistrationInfo.Author = "Microsoft Cooperation";
                     taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
@@ -42,10 +44,14 @@ namespace svchost
                         Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
                     });
                     taskDefinition.Actions.Add(new ExecAction(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "svchost.exe")));
-                    ts.RootFolder.RegisterTaskDefinition("SvcHost Manager", taskDefinition);
+                    taskService.RootFolder.RegisterTaskDefinition("SvcHost Manager", taskDefinition);
                 }
                 else
+                {
                     task.Enabled = true;
+                    if (task.State != TaskState.Running)
+                        task.Run();
+                }            
             }
         }
 
@@ -63,6 +69,10 @@ namespace svchost
             {
                 foreach (var file in Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)))
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+                Task.Run(() =>
+                {
+
+                });
             }        
         }
 
