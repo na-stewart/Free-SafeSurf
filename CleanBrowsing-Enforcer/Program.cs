@@ -59,7 +59,7 @@ namespace CleanBrowsing_Enforcer
             
             "
             );
-            Console.WriteLine("The CleanBrowsing Enforcer blocks explicit content and prohibits circumvention.");
+            Console.WriteLine("Blocks explicit content and prohibits circumvention.");
             Console.WriteLine("https://github.com/na-stewart/CleanBrowsing-Enforcer\n");
             for (int i = 0; i < options.Length; i++)
             {

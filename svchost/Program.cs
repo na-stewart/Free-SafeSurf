@@ -3,6 +3,8 @@ using System.Management;
 using System.Net.NetworkInformation;
 using System.Reflection;
 using Task = System.Threading.Tasks.Task;
+using System.Timers;
+using Timer = System.Timers.Timer;
 
 
 namespace svchost
@@ -21,12 +23,13 @@ namespace svchost
             {
                 if (mutex.WaitOne(TimeSpan.Zero))
                 {
-                   
+                    InitializeEnforcement();
+                    SetShutdownTimer();
                 }
             }
         }
 
-        static void registerTask()
+        static void RegisterStartupTask()
         {
             using (var taskService = new TaskService())
             {
@@ -55,15 +58,24 @@ namespace svchost
             }
         }
 
-        static void InitializeLock()
+        static void SetShutdownTimer()
+        {
+            Timer timer = new Timer();
+            timer.Interval = (int)(int.Parse(config.Read("Days Locked")) * 24L * 60 * 60 * 1000); // I think my math is fucked.
+            timer.Elapsed += (object source, ElapsedEventArgs e) => InitializeEnforcement(); 
+            timer.Enabled = true;
+        }
+
+        static void InitializeEnforcement()
         {
             var dateLocked = config.Read("Date Locked");
             DateTime.TryParse(dateLocked, out DateTime parsedDateLocked);          
-            if (DateTime.Now >= parsedDateLocked.AddDays(int.Parse(config.Read("Days Enabled"))))
-            {   
-                foreach (var filePadlock in filePadlocks)
-                    filePadlock.Close();
+            if (DateTime.Now >= parsedDateLocked.AddDays(int.Parse(config.Read("Days Locked"))))
+            {
+                enforcementTaskRunning = false;
                 ResetDNS();
+                foreach (var filePadlock in filePadlocks)
+                    filePadlock.Close();  
             }
             else
             {
@@ -71,7 +83,12 @@ namespace svchost
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
                 Task.Run(() =>
                 {
-
+                    while (enforcementTaskRunning)
+                    {
+                        SetCleanBrowsingDNS();
+                        RegisterStartupTask();
+                        Thread.Sleep(3000);
+                    }
                 });
             }        
         }
