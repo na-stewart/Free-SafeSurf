@@ -64,7 +64,7 @@ namespace CleanBrowsing_Enforcer
             "
             );
             Console.WriteLine("Blocks explicit content and prohibits circumvention.");
-            Console.WriteLine("Read documentation before use: https://github.com/na-stewart/CleanBrowsing-Enforcer\n");
+            Console.WriteLine("https://github.com/na-stewart/CleanBrowsing-Enforcer\n");
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == navIndex)
@@ -90,7 +90,7 @@ namespace CleanBrowsing_Enforcer
                 enforcerProcess = Process.GetProcessById(int.Parse(config.Read("enforcer-pid")));
             }
             catch (Exception) { }
-            navMessage += $"Enforcer Activated: {enforcerProcess != null && !enforcerProcess.HasExited}\n";      
+            navMessage += $"Enforcer Activate: {enforcerProcess != null && !enforcerProcess.HasExited}\n";      
         }
 
         static void Activate()
