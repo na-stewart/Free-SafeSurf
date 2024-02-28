@@ -37,7 +37,7 @@ namespace CleanBrowsing_Enforcer
 
         public void Write(string key, string value)
         {
-            var parsedKey = key.Replace(" ", "");
+            var parsedKey = key.ToLower().Replace(" ", "-");
             var rootNode = xml.DocumentElement;
             var node = rootNode.SelectSingleNode(parsedKey);
             if (node == null)
@@ -51,7 +51,7 @@ namespace CleanBrowsing_Enforcer
 
         public string Read(string key)
         {
-            var node = xml.DocumentElement.SelectSingleNode(key.Replace(" ", ""));
+            var node = xml.DocumentElement.SelectSingleNode(key.ToLower().Replace(" ", "-"));
             return node != null ? node.InnerText : "";
         }
     }

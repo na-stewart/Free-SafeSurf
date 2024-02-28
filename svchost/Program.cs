@@ -123,15 +123,15 @@ namespace svchost
 
         static void ResetDNS()
         {
-            var CurrentInterface = GetActiveEthernetOrWifiNetworkInterface();
-            if (CurrentInterface == null) return;
+            var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
+            if (currentInterface == null) return;
             var objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
             var objMOC = objMC.GetInstances();
             foreach (ManagementObject objMO in objMOC)
             {
                 if ((bool)objMO["IPEnabled"])
                 {
-                    if (objMO["Description"].Equals(CurrentInterface.Description))
+                    if (objMO["Description"].Equals(currentInterface.Description))
                     {
                         var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
                         if (objdns != null)
@@ -144,13 +144,12 @@ namespace svchost
             }
         }
 
-        static NetworkInterface GetActiveEthernetOrWifiNetworkInterface()
+        static NetworkInterface ?GetActiveEthernetOrWifiNetworkInterface()
         {
-            var Nic = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
+            return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
                 a => a.OperationalStatus == OperationalStatus.Up &&
                 (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString() == "InterNetwork"));
-            return Nic;
         }
     }
 }

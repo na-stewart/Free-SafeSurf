@@ -1,6 +1,8 @@
 ﻿
 
+using System;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 
 namespace CleanBrowsing_Enforcer
 {
@@ -10,10 +12,11 @@ namespace CleanBrowsing_Enforcer
         static string navMessage = "";
         static int navIndex = 0;
         static Option[] options = {
-            new Option("DNS Filter", ["adult", "family", "secure", "auto"]),
-            new Option("Enable SafeSearch", ["yes", "no"]),
-            new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),
-            new Option("Execute", SaveOptions),
+            new Option("Enable SafeSearch", ["no", "yes"]),
+            new Option("DNS Filter", ["off", "adult", "family", "secure"]), 
+            new Option("Days Active", ["0", "1", "7", "14", "30", "60", "365"]),
+            new Option("Check Status", CheckStatus),
+            new Option("Activate", () => Activate()),
             new Option("Exit", () => Environment.Exit(0)),
         };
         static ValueTuple<int, int> initialPos = Console.GetCursorPosition();
@@ -40,6 +43,7 @@ namespace CleanBrowsing_Enforcer
                     options[navIndex].Select(keyInfo);
             }
         }
+
         static void PrintNav()
         {
             Console.SetCursorPosition(initialPos.Item1, initialPos.Item2);
@@ -60,7 +64,7 @@ namespace CleanBrowsing_Enforcer
             "
             );
             Console.WriteLine("Blocks explicit content and prohibits circumvention.");
-            Console.WriteLine("https://github.com/na-stewart/CleanBrowsing-Enforcer\n");
+            Console.WriteLine("Read documentation before use: https://github.com/na-stewart/CleanBrowsing-Enforcer\n");
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == navIndex)
@@ -72,11 +76,31 @@ namespace CleanBrowsing_Enforcer
             Console.WriteLine($"\n{navMessage}");  
         }
 
-        static void SaveOptions()
+        static void CheckStatus()
+        {
+            var Nic = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
+                     a => a.OperationalStatus == OperationalStatus.Up &&
+                     (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
+                     a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString() == "InterNetwork"));
+            Process? enforcerProcess = null;
+            navMessage = $"DNS Filtration: {Nic.GetIPProperties().DnsAddresses.Count > 0}\n";     
+            navMessage += $"SafeSearch: {false}\n"; 
+            try
+            {
+                enforcerProcess = Process.GetProcessById(int.Parse(config.Read("enforcer-pid")));
+            }
+            catch (Exception) { }
+            navMessage += $"Enforcer Activated: {enforcerProcess != null && !enforcerProcess.HasExited}\n";      
+        }
+
+        static void Activate()
         {
             foreach (Option option in options)
-                config.Write(option.Name, option.ToString());
+                if (!option.isExecutableOption())
+                    config.Write(option.Name, option.ToString());
             navMessage = "Enforcer initialized!";
+            //Process process = Process.Start("");
+            //config.Write("enforcer-pid", process.Id.ToString());
         }
     }
 }

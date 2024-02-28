@@ -32,7 +32,7 @@ namespace svchost
 
         public string Read(string key)
         {
-            var node = xml.DocumentElement.SelectSingleNode(key.Replace(" ", ""));
+            var node = xml.DocumentElement.SelectSingleNode(key);
             return node != null ? node.InnerText : "";
         }
     }

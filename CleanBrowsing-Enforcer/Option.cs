@@ -44,6 +44,11 @@
                 onSelection();
         }
 
+        public bool isExecutableOption()
+        {
+            return availableSelections == null;
+        }
+
         public override string ToString()
         {
             return selection;
