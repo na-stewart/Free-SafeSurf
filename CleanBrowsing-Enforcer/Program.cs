@@ -12,12 +12,9 @@ namespace CleanBrowsing_Enforcer
         static string navMessage = "";
         static int navIndex = 0;
         static Option[] options = {
-            new Option("Enable SafeSearch", ["no", "yes"]),
-            new Option("DNS Filter", ["off", "adult", "family", "secure"]), 
-            new Option("Days Active", ["0", "1", "7", "14", "30", "60", "365"]),
-            new Option("Check Status", CheckStatus),
-            new Option("Activate", () => Activate()),
-            new Option("Exit", () => Environment.Exit(0)),
+            new Option("DNS Filter", ["off", "adult", "family", "secure"]),
+            new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),    
+            new Option("Activate", Activate),
         };
         static ValueTuple<int, int> initialPos = Console.GetCursorPosition();
         static Config config = Config.Instance;
@@ -25,6 +22,7 @@ namespace CleanBrowsing_Enforcer
 
         static void Main(string[] args)
         {
+            Console.Title = "CleanBrowsing Enforcer";
             while (navigating)
             {
                 PrintNav();
@@ -76,31 +74,18 @@ namespace CleanBrowsing_Enforcer
             Console.WriteLine($"\n{navMessage}");  
         }
 
-        static void CheckStatus()
-        {
-            var Nic = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
-                     a => a.OperationalStatus == OperationalStatus.Up &&
-                     (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
-                     a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString() == "InterNetwork"));
-            Process? enforcerProcess = null;
-            navMessage = $"DNS Filtration: {Nic.GetIPProperties().DnsAddresses.Count > 0}\n";     
-            navMessage += $"SafeSearch: {false}\n"; 
-            try
-            {
-                enforcerProcess = Process.GetProcessById(int.Parse(config.Read("enforcer-pid")));
-            }
-            catch (Exception) { }
-            navMessage += $"Enforcer Activate: {enforcerProcess != null && !enforcerProcess.HasExited}\n";      
-        }
-
         static void Activate()
         {
             foreach (Option option in options)
-                if (!option.isExecutableOption())
+                if (!option.isExecutable())
                     config.Write(option.Name, option.ToString());
-            navMessage = "Enforcer initialized!";
-            //Process process = Process.Start("");
-            //config.Write("enforcer-pid", process.Id.ToString());
+            if (options[0].ToString().Equals("off"))
+                navMessage = "CleanBrowsing disabled.";
+            else
+            {      
+                config.Write("Date Locked", DateTime.Now.ToString());
+                navMessage = "CleanBrowsing activated!";
+            }
         }
     }
 }

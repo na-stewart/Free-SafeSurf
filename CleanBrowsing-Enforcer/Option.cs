@@ -44,7 +44,7 @@
                 onSelection();
         }
 
-        public bool isExecutableOption()
+        public bool isExecutable()
         {
             return availableSelections == null;
         }
