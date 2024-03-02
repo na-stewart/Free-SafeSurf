@@ -3,8 +3,9 @@
 using System;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
+using System.Reflection;
 
-namespace CleanBrowsing_Enforcer
+namespace UI
 {
     internal class Program
     {
@@ -76,15 +77,23 @@ namespace CleanBrowsing_Enforcer
 
         static void Activate()
         {
-            foreach (Option option in options)
-                if (!option.isExecutable())
-                    config.Write(option.Name, option.ToString());
-            if (options[0].ToString().Equals("off"))
-                navMessage = "CleanBrowsing disabled.";
-            else
-            {      
-                config.Write("Date Locked", DateTime.Now.ToString());
-                navMessage = "CleanBrowsing activated!";
+            try
+            {
+                foreach (Option option in options)
+                    if (!option.isExecutable())
+                        config.Write(option.Name, option.ToString());
+                if (options[0].ToString().Equals("off"))
+                    navMessage = "CleanBrowsing disabled.";
+                else
+                {
+                    config.Write("Date Locked", DateTime.Now.ToString());
+                    navMessage = "CleanBrowsing activated!";
+                    // TODO: Best way to run daemon.
+                }
+            }
+            catch (IOException ex) {
+                DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
+                navMessage = $"Enforcer is locked! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")))}.";
             }
         }
     }

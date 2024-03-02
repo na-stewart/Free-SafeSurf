@@ -1,4 +1,4 @@
-﻿namespace CleanBrowsing_Enforcer
+﻿namespace UI
 {
     internal class Option
     {

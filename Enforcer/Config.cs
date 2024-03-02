@@ -1,8 +1,8 @@
 ﻿using System.Xml;
 
-namespace svchost
+namespace Enforcer
 {
-    public  class Config
+    internal class Config
     {
         private string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\CBEnforcer.config";
         private XmlDocument xml = new XmlDocument();
