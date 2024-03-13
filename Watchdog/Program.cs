@@ -12,14 +12,20 @@ namespace Watchdog
             {
                 if (mutex.WaitOne(TimeSpan.Zero))
                 {
-                    while (true)
+                    Process process = new Process();
+                    process.EnableRaisingEvents = true;
+                    process.OutputDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
                     {
-                        Process process = new Process();
-                        process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Executor.exe");
-                        process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Enforcer Daemon.exe")}\"";
-                        process.Start();
-                        Thread.Sleep(3000);
-                    }
+                        using (var p = Process.GetProcessById(int.Parse(e.Data)))
+                        {
+                            p.EnableRaisingEvents = true;
+                            p.Exited += (sender, e) => { process.Start(); };
+                        }
+                    });
+                    process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Executor.exe");
+                    process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Enforcer Daemon.exe")}\"";
+                    process.Start();
+                    process.BeginOutputReadLine();
                 }
             }
         }
