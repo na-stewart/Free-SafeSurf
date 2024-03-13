@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Executor": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Aidan Stewart\\source\\repos\\CleanBrowsing-Enforcer\\bin\\CleanBrowsing Enforcer.exe\""
+    }
+  }
+}

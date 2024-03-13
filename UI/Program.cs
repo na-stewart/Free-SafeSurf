@@ -1,8 +1,4 @@
-﻿
-
-using System;
-using System.Diagnostics;
-using System.Net.NetworkInformation;
+﻿using System.Diagnostics;
 using System.Reflection;
 
 namespace UI
@@ -88,7 +84,10 @@ namespace UI
                 {
                     config.Write("Date Locked", DateTime.Now.ToString());
                     navMessage = "CleanBrowsing activated!";
-                    // TODO: Best way to run daemon.
+                    Process process = new Process();
+                    process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Executor.exe");
+                    process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Enforcer Daemon.exe")}\"";
+                    process.Start();
                 }
             }
             catch (IOException ex) {

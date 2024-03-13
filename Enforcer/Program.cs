@@ -14,7 +14,7 @@ namespace Enforcer
 
         static void Main()
         {
-            using (var mutex = new Mutex(false, "Enforcer"))
+            using (var mutex = new Mutex(false, "cbe_enforcer"))
             {
                 if (mutex.WaitOne(TimeSpan.Zero))
                 {
@@ -33,7 +33,6 @@ namespace Enforcer
                     }
                     else
                         InitializeLock();
-                        // TODO: Run external batch which continually checks this application.
                 }
             }
         }
