@@ -1,4 +1,5 @@
 using Microsoft.Win32.TaskScheduler;
+using System.Diagnostics;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Reflection;
@@ -58,6 +59,8 @@ namespace Enforcer
                 {
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();
+                    Process.Start(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Watchdog.exe"));
+                    Thread.Sleep(3000);
                 }
                 Thread.Sleep(3000);
             }

@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI", "UI\UI.csproj", "{59E8
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Enforcer", "Enforcer\Enforcer.csproj", "{196DFD9D-6A3D-4C4C-BC7D-A7857EC674CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Executor", "Executor\Executor.csproj", "{FABA7B91-19B8-4706-A79B-F210379B63D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Executor", "Executor\Executor.csproj", "{FABA7B91-19B8-4706-A79B-F210379B63D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Watchdog", "Watchdog\Watchdog.csproj", "{D4F64B22-933D-4182-A58D-2D707EA8F6ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{FABA7B91-19B8-4706-A79B-F210379B63D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FABA7B91-19B8-4706-A79B-F210379B63D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FABA7B91-19B8-4706-A79B-F210379B63D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4F64B22-933D-4182-A58D-2D707EA8F6ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4F64B22-933D-4182-A58D-2D707EA8F6ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4F64B22-933D-4182-A58D-2D707EA8F6ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4F64B22-933D-4182-A58D-2D707EA8F6ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
