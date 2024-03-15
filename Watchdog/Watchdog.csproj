@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>CBEWatchdog</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>CleanBrowsingEnforcer Watchdog</AssemblyName>
   </PropertyGroup>
 
 </Project>

@@ -7,7 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>CleanBrowsingEnforcer Daemon</AssemblyName>
+    <AssemblyName>CBEDaemon</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

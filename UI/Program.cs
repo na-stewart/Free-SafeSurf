@@ -85,8 +85,8 @@ namespace UI
                     config.Write("Date Locked", DateTime.Now.ToString());
                     navMessage = "CleanBrowsing activated!";
                     Process process = new Process();
-                    process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Executor.exe");
-                    process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Enforcer Daemon.exe")}\"";
+                    process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
+                    process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")}\"";
                     process.Start();
                 }
             }
