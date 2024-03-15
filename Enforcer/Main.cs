@@ -1,5 +1,4 @@
 using Microsoft.Win32.TaskScheduler;
-using System.Data;
 using System.Diagnostics;
 using System.Management;
 using System.Net;
@@ -7,6 +6,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Task = Microsoft.Win32.TaskScheduler.Task;
 
 namespace Enforcer
 {
@@ -20,7 +20,7 @@ namespace Enforcer
         List<FileStream> filePadlocks = new List<FileStream>();
 
         public Main(string[] args)
-        {    
+        {
             Text = "CleanBrowsing Enforcer";
             if (config.Read("days-locked").Equals("0"))
             {
@@ -30,7 +30,7 @@ namespace Enforcer
                     RemoveStartupTask();
                 }
                 else
-                {       
+                {
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();
                 }
@@ -66,7 +66,7 @@ namespace Enforcer
             catch (SocketException) { }
             return networkDateTime;
         }
-       
+
         bool IsExpired()
         {
             DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
@@ -115,16 +115,16 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-
             Process watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
-            watchdog.EnableRaisingEvents = true;
-            watchdog.Exited += (sender, e) =>
+            Task.Run(() =>
             {
-                if (!IsExpired())
+                while (lockRunning)
                 {
+                    watchdog.WaitForExit();
                     InitializeWatchdog([]);
                 }
-            };
+            });
+          
 
         }
 
@@ -225,5 +225,6 @@ namespace Enforcer
 
             base.WndProc(ref aMessage);
         }
+
     }
 }
