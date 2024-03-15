@@ -87,8 +87,8 @@ namespace UI
                     Process process = new Process();
                     process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
                     process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")}\"";
-                    process.StartInfo.RedirectStandardError = true;
                     process.Start();
+                    process.WaitForExit();
                     PrintNav();
                 }
             }

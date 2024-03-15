@@ -74,7 +74,6 @@ namespace Enforcer
             DateTime expirationDate = parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")));
             DateTime? networkTime = GetNetworkTime();
             return networkTime == null ? false : networkTime >= expirationDate;
-
         }
 
         void InitializeLock()
@@ -221,9 +220,7 @@ namespace Enforcer
         {
             if (aMessage.Msg == 0x0011)
                 return;
-
             base.WndProc(ref aMessage);
         }
-
     }
 }
