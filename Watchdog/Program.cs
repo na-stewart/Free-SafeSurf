@@ -1,32 +1,14 @@
-using System.Diagnostics;
-using System.Reflection;
-
-internal static class Program
+namespace Watchdog
 {
-    static void Main(string[] args)
+    internal static class Program
     {
-        using (var mutex = new Mutex(false, "cbe_watchdog"))
+        /// <summary>
+        ///  The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main(string[] args)
         {
-            if (mutex.WaitOne(TimeSpan.Zero))
-            {
-                Process enforcer = Process.GetProcessById(int.Parse(args[0]));
-                while (true)
-                {
-                    enforcer.WaitForExit();
-                    enforcer = Process.GetProcessById(StartEnforcer());
-                }
-            }
+            Application.Run(new Main(args));
         }
-    }
-
-    static int StartEnforcer()
-    {
-        Process executor = new Process();
-        executor.EnableRaisingEvents = true;
-        executor.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
-        executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
-        executor.StartInfo.RedirectStandardOutput = true;
-        executor.Start();
-        return int.Parse(executor.StandardOutput.ReadLine());
     }
 }

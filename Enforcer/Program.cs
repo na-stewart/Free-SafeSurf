@@ -5,7 +5,10 @@
         [STAThread]
         static void Main(string[] args)
         {
-            Application.Run(new Main(args));
+            using (var mutex = new Mutex(false, "cbe_daemon"))
+            {
+                Application.Run(new Main(args));
+            }
         }
     }
 }
