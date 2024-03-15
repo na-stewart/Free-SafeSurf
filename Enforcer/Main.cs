@@ -122,7 +122,7 @@ namespace Enforcer
                 while (lockRunning)
                 {
                     watchdog.WaitForExit();
-                    InitializeWatchdog([]);
+                    watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
         }

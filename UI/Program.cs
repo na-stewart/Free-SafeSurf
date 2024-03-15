@@ -89,7 +89,7 @@ namespace UI
                     process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")}\"";
                     process.StartInfo.RedirectStandardError = true;
                     process.Start();
-                    process.Exited += (sender, e) => PrintNav();
+                    PrintNav();
                 }
             }
             catch (IOException ex)
