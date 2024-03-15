@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace UI
@@ -12,6 +13,8 @@ namespace UI
             new Option("DNS Filter", ["off", "adult", "family", "secure"]),
             new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),
             new Option("Activate", Activate),
+            new Option("Docs", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/CleanBrowsing-Enforcer/blob/master/README.md") { UseShellExecute = true }))
+          
         };
         static ValueTuple<int, int> initialPos = Console.GetCursorPosition();
         static Config config = Config.Instance;
@@ -59,7 +62,8 @@ namespace UI
             "
             );
             Console.WriteLine("Blocks explicit content and prohibits circumvention.");
-            Console.WriteLine("https://github.com/na-stewart/CleanBrowsing-Enforcer\n");
+            Console.WriteLine("Use arrow and enter keys to navigate.");
+            Console.WriteLine("https://github.com/na-stewart\n");
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == navIndex)
@@ -92,7 +96,7 @@ namespace UI
                     PrintNav();
                 }
             }
-            catch (IOException ex)
+            catch (IOException)
             {
                 DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
                 navMessage = $"Enforcer is locked! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")))}.";
