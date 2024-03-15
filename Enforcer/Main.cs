@@ -20,8 +20,7 @@ namespace Enforcer
         List<FileStream> filePadlocks = new List<FileStream>();
 
         public Main(string[] args)
-        {
-            ShutdownBlockReasonCreate(Handle, "CleanBrowsing Enforcer is locked.");
+        {    
             if (config.Read("days-locked").Equals("0"))
             {
                 if (config.Read("dns-filter").Equals("off"))
@@ -31,6 +30,7 @@ namespace Enforcer
                 }
                 else
                 {
+                    ShutdownBlockReasonCreate(Handle, "CleanBrowsing Enforcer is locked.");
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();
                 }
