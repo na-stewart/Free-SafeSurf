@@ -6,7 +6,8 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Task = Microsoft.Win32.TaskScheduler.Task;
+using Task = System.Threading.Tasks.Task;
+
 
 namespace Enforcer
 {
@@ -124,8 +125,6 @@ namespace Enforcer
                     InitializeWatchdog([]);
                 }
             });
-          
-
         }
 
         void RegisterStartupTask()
