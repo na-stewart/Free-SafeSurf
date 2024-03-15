@@ -21,6 +21,7 @@ namespace Enforcer
 
         public Main(string[] args)
         {
+            ShutdownBlockReasonCreate(Handle, "CleanBrowsing Enforcer is locked.");
             if (config.Read("days-locked").Equals("0"))
             {
                 if (config.Read("dns-filter").Equals("off"))
@@ -140,7 +141,7 @@ namespace Enforcer
                     taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                     taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                     taskDefinition.Triggers.Add(new LogonTrigger());
-                    taskDefinition.Actions.Add(new ExecAction(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CleanBrowsingEnforcer Daemon.exe")));
+                    taskDefinition.Actions.Add(new ExecAction(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")));
                     taskService.RootFolder.RegisterTaskDefinition("CleanBrowsing Enforcer", taskDefinition);
                 }
                 else
@@ -219,10 +220,7 @@ namespace Enforcer
 
         protected override void WndProc(ref Message aMessage)
         {
-            const int WM_QUERYENDSESSION = 0x0011;
-            const int WM_ENDSESSION = 0x0016;
-
-            if (aMessage.Msg == WM_QUERYENDSESSION)
+            if (aMessage.Msg == 0x0011)
                 return;
 
             base.WndProc(ref aMessage);

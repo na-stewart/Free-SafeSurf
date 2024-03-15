@@ -10,7 +10,7 @@ namespace UI
         static int navIndex = 0;
         static Option[] options = {
             new Option("DNS Filter", ["off", "adult", "family", "secure"]),
-            new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),    
+            new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),
             new Option("Activate", Activate),
         };
         static ValueTuple<int, int> initialPos = Console.GetCursorPosition();
@@ -68,7 +68,7 @@ namespace UI
                 Console.ResetColor();
                 Console.WriteLine(options[i].ToString());
             }
-            Console.WriteLine($"\n{navMessage}");  
+            Console.WriteLine($"\n{navMessage}");
         }
 
         static void Activate()
@@ -90,7 +90,8 @@ namespace UI
                     process.Start();
                 }
             }
-            catch (IOException ex) {
+            catch (IOException ex)
+            {
                 DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
                 navMessage = $"Enforcer is locked! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")))}.";
             }
