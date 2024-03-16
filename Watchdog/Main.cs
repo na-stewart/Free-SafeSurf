@@ -7,7 +7,7 @@ namespace Watchdog
     {
         public Main(string[] args)
         {
-            Text = "CBEDaemon";
+            Text = "CBEWatchdog";
             Process enforcer = Process.GetProcessById(int.Parse(args[0]));
             while (true)
             {

@@ -95,9 +95,8 @@ namespace Enforcer
                 {
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();
-                    Thread.Sleep(3000);
                 }
-                Thread.Sleep(3000);
+                Thread.Sleep(5000);
             }
         }
 

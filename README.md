@@ -68,18 +68,12 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-CleanBrowsing Enforcer protects you and your loved ones from harmful materials online. 
+CleanBrowsing Enforcer for Windows protects you and your loved ones from harmful materials online. 
 
-Dangerous websites can be filtered out on the network level via a [privary friendly](https://cleanbrowsing.org/privacy) DNS service or on your web browser via [SafeSearch](https://developers.google.com/search/docs/crawling-indexing/safesearch).
+Dangerous websites can be filtered out on the network level via a [private DNS service](https://cleanbrowsing.org/privacy) or on your web browser via [SafeSearch](https://developers.google.com/search/docs/crawling-indexing/safesearch).
 
-Bypass prevention prevents the user from disabling the filter.
+Configurable bypass prevention prevents the user from disabling the filter or making changes to settings.
 
-CleanBrowsing Enforcer is completely free and does not collect data or communicate with any severs. 
-
-(), however if you are till uncomfortable with network level filtering, SafeSearch is 
-
-
-This project is not affiliated with CleanBrowsing.org
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

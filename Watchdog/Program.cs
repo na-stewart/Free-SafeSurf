@@ -8,7 +8,11 @@ namespace Watchdog
         [STAThread]
         static void Main(string[] args)
         {
-            Application.Run(new Main(args));
+            using (var mutex = new Mutex(false, "CBEWatchdog"))
+            {
+                if (mutex.WaitOne(TimeSpan.Zero))
+                    Application.Run(new Main(args));
+            }
         }
     }
 }
