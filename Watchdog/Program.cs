@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Reflection;
 
 internal static class Program
@@ -23,8 +23,8 @@ internal static class Program
     {
         Process executor = new Process();
         executor.EnableRaisingEvents = true;
-        executor.StartInfo.FileName = Path.Combine(Assembly.GetExecutingAssembly().Location, "CBEExecutor.exe");
-        executor.StartInfo.Arguments = $"\"{Path.Combine(Assembly.GetExecutingAssembly().Location, "CBEDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
+        executor.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
+        executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
         executor.StartInfo.RedirectStandardOutput = true;
         executor.Start();
         return int.Parse(executor.StandardOutput.ReadLine());

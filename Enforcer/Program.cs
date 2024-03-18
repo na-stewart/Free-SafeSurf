@@ -9,7 +9,7 @@ namespace Enforcer
     internal static class Program
     {
         [STAThread]
-        static void Main(String[] args)
+        static void Main(string[] args)
         {
             Application.Run(new Main(args));
         }

@@ -21,6 +21,7 @@ namespace Enforcer
 
         public Main(string[] args)
         {    
+            Text = "CleanBrowsing Enforcer";
             if (config.Read("days-locked").Equals("0"))
             {
                 if (config.Read("dns-filter").Equals("off"))
@@ -29,8 +30,7 @@ namespace Enforcer
                     RemoveStartupTask();
                 }
                 else
-                {
-                    ShutdownBlockReasonCreate(Handle, "CleanBrowsing Enforcer is locked.");
+                {       
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();
                 }
@@ -38,8 +38,8 @@ namespace Enforcer
             else
             {
                 InitializeWatchdog(args);
+                ShutdownBlockReasonCreate(Handle, "CleanBrowsing Enforcer is locked.");
                 InitializeLock();
-
             }
         }
 
