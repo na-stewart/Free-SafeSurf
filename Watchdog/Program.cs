@@ -11,33 +11,28 @@ namespace Watchdog
             {
                 if (mutex.WaitOne(TimeSpan.Zero))
                 {
-                    InitializeDaemonListenerBackup();
+                    Task.Run(() => //Backup watchdog handler.
+                    {
+                        while (true)
+                        {
+                            Thread.Sleep(1000);
+                            Process[] processes = Process.GetProcessesByName("CBEDaemon");
+                            if (processes.Length == 0)
+                                StartDaemon();
+                        }
+                    });
                     Process enforcer = Process.GetProcessById(int.Parse(args[0]));
                     while (true)
                     {
                         enforcer.WaitForExit();
                         enforcer.Close();
-                        enforcer = Process.GetProcessById(StartEnforcer());
+                        enforcer = Process.GetProcessById(StartDaemon());
                     }
                 }
             }
         }
-
-        static void InitializeDaemonListenerBackup()
-        {
-            Task.Run(() => //Backup watchdog handler.
-            {
-                while (true)
-                {
-                    Thread.Sleep(1000);
-                    Process[] processes = Process.GetProcessesByName("CBEDaemon");
-                    if (processes.Length == 0)
-                        StartEnforcer();
-                }
-            });
-        }
         
-        static int StartEnforcer()
+        static int StartDaemon()
         {
             using (Process executor = new Process())
             {
