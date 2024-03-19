@@ -8,12 +8,14 @@ namespace Executor
     {
         static void Main(string[] args)
         {
-            Process process = new Process();
-            process.StartInfo.FileName = args[0];
-            if (args.Length > 1)
-                process.StartInfo.Arguments = args[1];
-            process.Start();
-            Console.WriteLine(process.Id);
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = args[0];
+                if (args.Length > 1)
+                    process.StartInfo.Arguments = args[1];
+                process.Start();
+                Console.WriteLine(process.Id);              
+            }
             Environment.Exit(0);
         }
     }

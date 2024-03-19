@@ -16,7 +16,7 @@ namespace Enforcer
 
         [DllImport("user32.dll")]
         public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        bool lockRunning = true;
+        bool isLockActive = true;
         Config config = Config.Instance;
         List<FileStream> filePadlocks = new List<FileStream>();
 
@@ -81,7 +81,7 @@ namespace Enforcer
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-            while (lockRunning)
+            while (isLockActive)
             {
                 if (IsExpired())
                 {
@@ -89,7 +89,7 @@ namespace Enforcer
                     RemoveStartupTask();
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
-                    lockRunning = false;
+                    isLockActive = false;
                 }
                 else
                 {
@@ -105,22 +105,34 @@ namespace Enforcer
             using (Process executor = new Process())
             {
                 executor.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEWatchdog.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
             }
         }
 
+      
         void InitializeWatchdog(string[] args)
         {
             Process watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
             Task.Run(() =>
             {
-                while (lockRunning)
+                while (isLockActive)
                 {
                     watchdog.WaitForExit();
+                    watchdog.Close();
                     watchdog = Process.GetProcessById(StartWatchdog());
+                }
+            });       
+            Task.Run(() => //Backup watchdog handler.
+            {
+                while (isLockActive)
+                {
+                    Thread.Sleep(1000);
+                    Process[] processes = Process.GetProcessesByName("CBEWatchdog");
+                    if (processes.Length == 0)
+                        StartWatchdog();              
                 }
             });
         }
@@ -129,7 +141,6 @@ namespace Enforcer
         {
             using (var taskService = new TaskService())
             {
-
                 var task = taskService.GetTask("CleanBrowsing Enforcer");
                 if (task == null)
                 {
@@ -138,6 +149,11 @@ namespace Enforcer
                     taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                     taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                     taskDefinition.Triggers.Add(new LogonTrigger());
+                    taskDefinition.Triggers.Add(new TimeTrigger()
+                    {
+                        StartBoundary = DateTime.Now,
+                        Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
+                    });
                     taskDefinition.Actions.Add(new ExecAction(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")));
                     taskService.RootFolder.RegisterTaskDefinition("CleanBrowsing Enforcer", taskDefinition);
                 }

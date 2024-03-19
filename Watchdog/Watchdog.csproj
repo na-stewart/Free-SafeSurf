@@ -6,11 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>svchost</AssemblyName>
-    <Title>CBEWatchdog</Title>
-    <Authors>CBEWatchdog</Authors>
-    <Company>CBEWatchdog</Company>
-    <Product>CBEWatchdog</Product>
+    <AssemblyName>CBEWatchdog</AssemblyName>
     <StartupObject></StartupObject>
   </PropertyGroup>
 
