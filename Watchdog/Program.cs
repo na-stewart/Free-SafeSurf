@@ -11,16 +11,6 @@ namespace Watchdog
             {
                 if (mutex.WaitOne(TimeSpan.Zero))
                 {
-                    Task.Run(() => //Backup daemon handler.
-                    {
-                        while (true)
-                        {
-                            Thread.Sleep(1000);
-                            Process[] processes = Process.GetProcessesByName("CBEDaemon");
-                            if (processes.Length == 0)
-                                StartDaemon();
-                        }
-                    });
                     Process enforcer = Process.GetProcessById(int.Parse(args[0]));
                     while (true)
                     {

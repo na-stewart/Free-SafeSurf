@@ -7,6 +7,9 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>CBEExecutor</AssemblyName>
+    <Title>CBEExecutor</Title>
+    <Authors>https://github.com/na-stewart</Authors>
+    <Company>https://github.com/na-stewart</Company>
   </PropertyGroup>
 
 </Project>

@@ -7,6 +7,9 @@
     <Nullable>enable</Nullable>
     <AssemblyName>CleanBrowsing Enforcer</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Title>CleanBrowsing Enforcer</Title>
+    <Authors>https://github.com/na-stewart</Authors>
+    <Company>https://github.com/na-stewart</Company>
   </PropertyGroup>
 
 </Project>

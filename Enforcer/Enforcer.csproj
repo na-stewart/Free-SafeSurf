@@ -8,6 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>CBEDaemon</AssemblyName>
+    <Title>CBEDaemon</Title>
+    <Authors>https://github.com/na-stewart</Authors>
+    <Company>https://github.com/na-stewart</Company>
   </PropertyGroup>
 
   <ItemGroup>

@@ -13,7 +13,6 @@ namespace Enforcer
 {
     public partial class Main : Form
     {
-
         [DllImport("user32.dll")]
         public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         bool isLockActive = true;
@@ -105,14 +104,13 @@ namespace Enforcer
             using (Process executor = new Process())
             {
                 executor.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEWatchdog.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
             }
         }
 
-      
         void InitializeWatchdog(string[] args)
         {
             Process watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
@@ -125,16 +123,6 @@ namespace Enforcer
                     watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });       
-            Task.Run(() => //Backup watchdog handler.
-            {
-                while (isLockActive)
-                {
-                    Thread.Sleep(1000);
-                    Process[] processes = Process.GetProcessesByName("CBEWatchdog");
-                    if (processes.Length == 0)
-                        StartWatchdog();              
-                }
-            });
         }
 
         void RegisterStartupTask()
