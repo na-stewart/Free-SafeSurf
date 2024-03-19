@@ -5,10 +5,6 @@ namespace Watchdog
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
-        [STAThread]
         static void Main(string[] args)
         {
             using (var mutex = new Mutex(false, "CBEWatchdog"))
@@ -27,7 +23,6 @@ namespace Watchdog
             }
         }
 
-
         static void InitializeDaemonListenerBackup()
         {
             Task.Run(() => //Backup watchdog handler.
@@ -37,11 +32,11 @@ namespace Watchdog
                     Thread.Sleep(1000);
                     Process[] processes = Process.GetProcessesByName("CBEDaemon");
                     if (processes.Length == 0)
-                        StartEnforcer();               
+                        StartEnforcer();
                 }
             });
         }
-
+        
         static int StartEnforcer()
         {
             using (Process executor = new Process())

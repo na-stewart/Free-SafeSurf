@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Executor", "Executor\Execut
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI", "UI\UI.csproj", "{DC927897-4C96-4F01-93A6-F025C50C9590}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Watchdog", "Watchdog\Watchdog.csproj", "{C09EA385-00F3-4E66-A0AA-8A17950C6DAA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Watchdog", "Watchdog\Watchdog.csproj", "{8B82EB40-B25B-4976-8125-A3A0BDE3E1C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{DC927897-4C96-4F01-93A6-F025C50C9590}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC927897-4C96-4F01-93A6-F025C50C9590}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC927897-4C96-4F01-93A6-F025C50C9590}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C09EA385-00F3-4E66-A0AA-8A17950C6DAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C09EA385-00F3-4E66-A0AA-8A17950C6DAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C09EA385-00F3-4E66-A0AA-8A17950C6DAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C09EA385-00F3-4E66-A0AA-8A17950C6DAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B82EB40-B25B-4976-8125-A3A0BDE3E1C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B82EB40-B25B-4976-8125-A3A0BDE3E1C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B82EB40-B25B-4976-8125-A3A0BDE3E1C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B82EB40-B25B-4976-8125-A3A0BDE3E1C3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
