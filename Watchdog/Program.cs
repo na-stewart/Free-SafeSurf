@@ -11,7 +11,7 @@ namespace Watchdog
             {
                 if (mutex.WaitOne(TimeSpan.Zero))
                 {
-                    Task.Run(() => //Backup watchdog handler.
+                    Task.Run(() => //Backup daemon handler.
                     {
                         while (true)
                         {
