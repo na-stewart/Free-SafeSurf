@@ -26,12 +26,12 @@ namespace Enforcer
             {
                 if (config.Read("dns-filter").Equals("off"))
                 {
-                    ResetDNS();
+                    SetCleanBrowsingDNS(true);
                     RemoveStartupTask();
                 }
                 else
                 {
-                    SetCleanBrowsingDNS();
+                    SetCleanBrowsingDNS(false);
                     RegisterStartupTask();
                 }
             }
@@ -84,7 +84,7 @@ namespace Enforcer
             {
                 if (IsExpired())
                 {
-                    ResetDNS();
+                    SetCleanBrowsingDNS(true);
                     RemoveStartupTask();
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
@@ -92,7 +92,7 @@ namespace Enforcer
                 }
                 else
                 {
-                    SetCleanBrowsingDNS();
+                    SetCleanBrowsingDNS(false);
                     RegisterStartupTask();
                     DisablePowerShell();
                 }
@@ -159,21 +159,21 @@ namespace Enforcer
             }
         }
 
-        void SetCleanBrowsingDNS()
+        void SetCleanBrowsingDNS(bool reset)
         {
             try
             {
-                string[] dns;
+                string[]? dns;
                 string dnsFilter = config.Read("dns-filter");
-                if (dnsFilter == "adult")
+                if (reset || dnsFilter.Equals("off"))
+                    dns = null;
+                else if (dnsFilter.Equals("adult"))
                     dns = ["185.228.168.10", "185.228.169.11"];
-                else if (dnsFilter == "family")
+                else if (dnsFilter.Equals("family"))
                     dns = ["185.228.168.168", "185.228.169.168"];
                 else
                     dns = ["185.228.168.9", "185.228.169.9"];
                 var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
-                while (currentInterface == null)
-                    currentInterface = GetActiveEthernetOrWifiNetworkInterface();
                 if (currentInterface == null) return;
                 var objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
                 var objMOC = objMC.GetInstances();
@@ -196,42 +196,19 @@ namespace Enforcer
             catch (FileLoadException) { }
         }
 
-        void ResetDNS()
-        {
-            var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
-            if (currentInterface == null) return;
-            var objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
-            var objMOC = objMC.GetInstances();
-            foreach (ManagementObject objMO in objMOC)
-            {
-                if ((bool)objMO["IPEnabled"])
-                {
-                    if (objMO["Description"].Equals(currentInterface.Description))
-                    {
-                        var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
-                        if (objdns != null)
-                        {
-                            objdns["DNSServerSearchOrder"] = null;
-                            objMO.InvokeMethod("SetDNSServerSearchOrder", objdns, null);
-                        }
-                    }
-                }
-            }
-        }
-
         NetworkInterface? GetActiveEthernetOrWifiNetworkInterface()
         {
             return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
                 a => a.OperationalStatus == OperationalStatus.Up &&
                 (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
-                a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString() == "InterNetwork"));
+                a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
         void DisablePowerShell()
         {
             foreach (Process process in Process.GetProcesses())
             {
-                string? windowTitle = process.MainWindowTitle;
+                string windowTitle = process.MainWindowTitle;
                 if (!string.IsNullOrEmpty(windowTitle) && windowTitle.Contains("Windows PowerShell"))
                     process.Kill();
             }
