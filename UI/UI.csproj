@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <StartupObject>UI.Program</StartupObject>
-    <AssemblyName>Safe Surf</AssemblyName>
+    <AssemblyName>SafeSurf</AssemblyName>
     <ApplicationIcon>safe-surf.ico</ApplicationIcon>
     <Version>0.1</Version>
     <AssemblyVersion>0.1</AssemblyVersion>
