@@ -96,7 +96,7 @@ namespace Enforcer
                     RegisterStartupTask();
                     DisablePowerShell();
                 }
-                Thread.Sleep(5000);
+                Thread.Sleep(3000);
             }
         }
 
@@ -231,7 +231,8 @@ namespace Enforcer
         {
             foreach (Process process in Process.GetProcesses())
             {
-                if (process.MainWindowTitle.Contains("Windows PowerShell"))
+                string? windowTitle = process.MainWindowTitle;
+                if (!string.IsNullOrEmpty(windowTitle) && windowTitle.Contains("Windows PowerShell"))
                     process.Kill();
             }
         }
