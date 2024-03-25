@@ -94,6 +94,7 @@ namespace Enforcer
                 {
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();
+                    DisablePowerShell();
                 }
                 Thread.Sleep(5000);
             }
@@ -224,6 +225,15 @@ namespace Enforcer
                 a => a.OperationalStatus == OperationalStatus.Up &&
                 (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString() == "InterNetwork"));
+        }
+
+        void DisablePowerShell()
+        {
+            foreach (Process process in Process.GetProcesses())
+            {
+                if (process.MainWindowTitle.Contains("Windows PowerShell"))
+                    process.Kill();
+            }
         }
 
         protected override void WndProc(ref Message aMessage)
