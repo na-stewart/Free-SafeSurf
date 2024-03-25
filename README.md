@@ -26,9 +26,6 @@
   <a href="https://github.com/othneildrew/Best-README-Template">
     <img src="https://github.com/na-stewart/SafeSurf/blob/master/img/safe-surf.png" alt="Logo" width="350" height="350">
   </a>
-
-  <h3 align="center">Safe Surf</h3>
-
   <p align="center">
     Blocks harmful content and prohibits circumvention.
     <br />
@@ -41,110 +38,50 @@
 <details>
   <summary>Table of Contents</summary>
   <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#about-the-project">About The Project</a></li>
+    <li><a href="#configuration">Configuration</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
-
-
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-CleanBrowsing Enforcer for Windows protects you and your loved ones from harmful materials online. 
+SafeSurf for Windows can protect you and your loved ones from harmful materials online.
 
-Dangerous websites can be filtered out on the network level via a [private DNS service](https://cleanbrowsing.org/privacy) or on your web browser via [SafeSearch](https://developers.google.com/search/docs/crawling-indexing/safesearch).
+Configurable bypass prevention prevents the user from disabling the filter or making changes to settings for
+a certain period of time.
 
-Configurable bypass prevention prevents the user from disabling the filter or making changes to settings.
-
+Safe Surf is privacy friendly as absolutely no data is collected and it is completely free and open source.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-
-
 
 <!-- GETTING STARTED -->
-## Getting Started
+## Configuration
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+SafeSurf has been designed to be simple to use, simply download the most recent binary from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf`
 
-### Prerequisites
+<ins>Before configuration, make sure you understand what each setting does.</ins>
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+### Hosts Filter
+Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the users request to visit the site. The main drawback is that some content may fall through the cracks if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
 
-### Installation
+- Adult: Rejects all domains with questionable adult content.
+- Gambling: Rejects all online gambling sites and questionable adult content.
+- Family: Rejects all domains with questional adult content as well as mixed content sites (like Reddit).
 
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
+### CleanBrowsing DNS Filter
+Network level content filtering is implemented via a service called [CleanBrowsing](https://cleanbrowsing.org/) which provides free, private DNS addresses that effectively reject questionable content. The main drawback is that setting a custom DNS on Windows may lead to network issues depending on your ISP.
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+- Adult: Rejects all questionable adult content.
+- Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+### Disable PowerShell
+This setting is only utilized when the SafeSurf enforcer is active. If enabled, any Windows PowerShell instance will be closed in order to prevent circumvention. 
 
-
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ROADMAP -->
-## Roadmap
-
-- [x] Add Changelog
-- [x] Add back to top links
-- [ ] Add Additional Templates w/ Examples
-- [ ] Add "components" document to easily copy & paste sections of the readme
-- [ ] Multi-language Support
-    - [ ] Chinese
-    - [ ] Spanish
-
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
+### Days Enforced
+This setting will initialize the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. 
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -171,31 +108,6 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
-<!-- CONTACT -->
-## Contact
-
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
-
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
 * [React Icons](https://react-icons.github.io/react-icons/search)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
