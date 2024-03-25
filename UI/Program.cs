@@ -89,7 +89,7 @@ namespace UI
             catch (IOException)
             {
                 DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
-                navMessage = $"Safe Surf enforcer is active! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")))}.";
+                navMessage = $"Safe Surf enforcer is active! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-enforced")))}.";
             }
         }
     }
