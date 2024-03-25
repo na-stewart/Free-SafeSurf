@@ -56,8 +56,6 @@ a certain period of time.
 
 SafeSurf is privacy friendly as absolutely no data is collected and it is completely free and open source.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 <!-- GETTING STARTED -->
 ## Configuration
 
@@ -68,9 +66,9 @@ SafeSurf has been designed to be simple to use, simply download the most recent 
 ### Hosts Filter
 Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the user's request to visit the site. The main drawback is that some content may fall through the cracks if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
 
-- Adult: Rejects all domains with questionable adult content.
+- Adult: Rejects all questionable adult content.
 - Gambling: Rejects all online gambling sites and questionable adult content.
-- Family: Rejects all domains with questional adult content as well as mixed content sites (like Reddit).
+- Family: Rejects all questional adult content as well as mixed content sites (like Reddit).
 
 ### CleanBrowsing DNS Filter
 Network level content filtering is implemented via a service called [CleanBrowsing](https://cleanbrowsing.org/) which provides free, private DNS addresses that effectively reject questionable content. The main drawback is that setting a custom DNS on Windows may lead to network issues depending on your ISP. Some users may be uncomfortable funneling all network activity through CleanBrowsing, be sure to read their [privacy policy](https://cleanbrowsing.org/privacy) and investigate further.
@@ -91,7 +89,7 @@ It may occur that SafeSurf is detected as a virus by your antivirus due to the a
 This can be solved by making an exception for SafeSurf in your respective antivirus, make sure to do so with the program directory and not the program directly. 
 
 ### I cannot connect to the internet.
-In the instance the CleanBrowsing causes connectivity issues, it is recommended to simply utilize the Windows network adapter troubleshooter. This will in most instances fix your connectivity issues.
+In the instance that CleanBrowsing causes connectivity issues, it is recommended to simply utilize the Windows network adapter troubleshooter. This will in most instances fix your connectivity issues.
 
 <!-- CONTRIBUTING -->
 ## Contributing
