@@ -30,7 +30,7 @@
   <h3 align="center">CleanBrowsing Enforcer</h3>
 
   <p align="center">
-    Blocks explicit content and prohibits circumvention.
+    Blocks harmful content and prohibits circumvention.
     <br />
   </p>
 </div>
