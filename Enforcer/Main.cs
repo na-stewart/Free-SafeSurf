@@ -84,12 +84,14 @@ namespace Enforcer
                 }
                 else
                 {
-                    SetCleanBrowsingDNS();
-                    RegisterStartupTask();
                     if (config.Read("disable-powershell").Equals("yes"))
-                        DisablePowerShell();
+                        foreach (Process process in Process.GetProcesses())
+                            if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("PowerShell"))
+                                process.Kill();
+                    SetCleanBrowsingDNS();
+                    RegisterStartupTask();              
                 }
-                Thread.Sleep(3000);
+                Thread.Sleep(5000);
             }
         }
 
@@ -199,15 +201,6 @@ namespace Enforcer
                 File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
             else
                 File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
-        }
-
-        void DisablePowerShell()
-        {
-            foreach (Process process in Process.GetProcesses())
-            {
-                if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("Windows PowerShell"))
-                    process.Kill();
-            }
         }
 
         protected override void WndProc(ref Message aMessage)
