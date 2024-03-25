@@ -40,6 +40,7 @@
   <ol>
     <li><a href="#about-the-project">About The Project</a></li>
     <li><a href="#configuration">Configuration</a></li>
+    <li><a href="#troubleshooting">Troubleshooting</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
   </ol>
@@ -65,7 +66,7 @@ SafeSurf has been designed to be simple to use, simply download the most recent 
 <ins>Before configuration, make sure you understand what each setting does.</ins>
 
 ### Hosts Filter
-Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the users request to visit the site. The main drawback is that some content may fall through the cracks if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
+Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the user's request to visit the site. The main drawback is that some content may fall through the cracks if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
 
 - Adult: Rejects all domains with questionable adult content.
 - Gambling: Rejects all online gambling sites and questionable adult content.
@@ -81,7 +82,16 @@ Network level content filtering is implemented via a service called [CleanBrowsi
 This setting is only utilized when the SafeSurf enforcer is active. If enabled, any Windows PowerShell instance will be closed in order to prevent circumvention. 
 
 ### Days Enforced
-This setting will initialize the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. 
+This setting will initialize the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. It is highly recommended to start with 1 to 7 days and increase the time span once your settings are working well for you.
+
+## Troubleshooting
+
+### SafeSurf is being detected as a virus.
+It may occur that SafeSurf is detected as a virus by your antivirus due to the anti-circumvention measures of the enforcer. To reiterate, SafeSurf is not a malicious program and does not cause harm in any way. 
+This can be solved by making an exception for SafeSurf in your respective antivirus, make sure to do so with the program directory and not the program directly. 
+
+### I cannot connect to the internet.
+In the instance the CleanBrowsing causes connectivity issues, it is recommended to simply utilize the Windows network adapter troubleshooter. This will in most instances fix your connectivity issues.
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -97,20 +107,7 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
