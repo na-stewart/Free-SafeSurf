@@ -27,7 +27,7 @@
     <img src="https://github.com/na-stewart/SafeSurf/blob/master/img/safe-surf.png" alt="Logo" width="350" height="350">
   </a>
 
-  <h3 align="center">CleanBrowsing Enforcer</h3>
+  <h3 align="center">Safe Surf</h3>
 
   <p align="center">
     Blocks harmful content and prohibits circumvention.
