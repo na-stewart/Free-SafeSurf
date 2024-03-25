@@ -24,16 +24,8 @@ namespace Enforcer
             Text = "CleanBrowsing Enforcer";
             if (config.Read("days-locked").Equals("0"))
             {
-                if (config.Read("dns-filter").Equals("off"))
-                {
-                    SetCleanBrowsingDNS(true);
-                    RemoveStartupTask();
-                }
-                else
-                {
-                    SetCleanBrowsingDNS(false);
-                    RegisterStartupTask();
-                }
+                RegisterStartupTask();  
+                SetCleanBrowsingDNS(false);
             }
             else
             {
