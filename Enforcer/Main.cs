@@ -22,7 +22,8 @@ namespace Enforcer
 
         public Main(string[] args)
         {
-            this.InitializeComponent();
+            InitializeComponent();
+
             SetHosts();
             if (config.Read("days-enforced").Equals("0"))
             {

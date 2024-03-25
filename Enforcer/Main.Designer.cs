@@ -38,6 +38,7 @@
             ClientSize = new Size(283, 175);
             Icon = (Icon)resources.GetObject("$this.Icon");
             Name = "Main";
+            Text = "SafeSurf";
             ShowInTaskbar = false;
             WindowState = FormWindowState.Minimized;
             ResumeLayout(false);
