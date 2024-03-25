@@ -12,7 +12,7 @@ namespace UI
             new Option("CleanBrowsing DNS Filter", ["off", "adult", "family"]),
             new Option("Disable PowerShell", ["yes", "no"]),
             new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "365"]),
-            new Option("Activate", Activate),
+            new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
           
         };
@@ -70,7 +70,7 @@ namespace UI
             Console.WriteLine($"\n{navMessage}");
         }
 
-        static void Activate()
+        static void Execute()
         {
             try
             {
@@ -83,7 +83,7 @@ namespace UI
                 process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSDaemon.exe")}\"";
                 process.Start();
                 process.WaitForExit();
-                navMessage = "Safe Surf activated!";
+                navMessage = "Safe Surf executed successfully!";
                 PrintNav();
             }
             catch (IOException)
