@@ -162,23 +162,30 @@ namespace Enforcer
         {
             try
             {
-                string[] Dns = { "185.228.168.10", "185.228.169.11" };
-                var CurrentInterface = GetActiveEthernetOrWifiNetworkInterface();
-                while (CurrentInterface == null)
-                    CurrentInterface = GetActiveEthernetOrWifiNetworkInterface();
-                if (CurrentInterface == null) return;
+                string[] dns;
+                string dnsFilter = config.Read("dns-filer");
+                if (dnsFilter == "adult")
+                    dns = ["185.228.168.10", "185.228.169.11"];
+                else if (dnsFilter == "family")
+                    dns = ["185.228.168.168", "185.228.169.168"];
+                else
+                    dns = ["185.228.168.9", "185.228.169.9"];
+                var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
+                while (currentInterface == null)
+                    currentInterface = GetActiveEthernetOrWifiNetworkInterface();
+                if (currentInterface == null) return;
                 var objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
                 var objMOC = objMC.GetInstances();
                 foreach (ManagementObject objMO in objMOC)
                 {
                     if ((bool)objMO["IPEnabled"])
                     {
-                        if (objMO["Description"].Equals(CurrentInterface.Description))
+                        if (objMO["Description"].Equals(currentInterface.Description))
                         {
                             var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
                             if (objdns != null)
                             {
-                                objdns["DNSServerSearchOrder"] = Dns;
+                                objdns["DNSServerSearchOrder"] = dns;
                                 objMO.InvokeMethod("SetDNSServerSearchOrder", objdns, null);
                             }
                         }
