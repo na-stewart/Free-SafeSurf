@@ -88,7 +88,7 @@ namespace Enforcer
                     RegisterStartupTask();
                     DisablePowerShell();
                 }
-                Thread.Sleep(3000);
+                Thread.Sleep(5000);
             }
         }
 
