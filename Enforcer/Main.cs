@@ -164,7 +164,7 @@ namespace Enforcer
             try
             {
                 string[] dns;
-                string dnsFilter = config.Read("dns-filer");
+                string dnsFilter = config.Read("dns-filter");
                 if (dnsFilter == "adult")
                     dns = ["185.228.168.10", "185.228.169.11"];
                 else if (dnsFilter == "family")
