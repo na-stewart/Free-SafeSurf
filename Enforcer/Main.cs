@@ -143,6 +143,7 @@ namespace Enforcer
                         StartBoundary = DateTime.Now,
                         Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
                     });
+                    taskDefinition.Settings.DisallowStartIfOnBatteries = false;
                     taskDefinition.Actions.Add(new ExecAction(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")));
                     taskService.RootFolder.RegisterTaskDefinition("CleanBrowsing Enforcer", taskDefinition);
                 }
