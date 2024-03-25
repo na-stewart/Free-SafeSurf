@@ -9,7 +9,7 @@ namespace Enforcer
 {
     internal class Config
     {
-        private string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\CBEnforcer.config";
+        private string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
         private XmlDocument xml = new XmlDocument();
         private static Config instance = null;
 

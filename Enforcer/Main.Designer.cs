@@ -28,10 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "Form1";
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
+            SuspendLayout();
+            // 
+            // Main
+            // 
+            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(283, 175);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "Main";
+            ShowInTaskbar = false;
+            WindowState = FormWindowState.Minimized;
+            ResumeLayout(false);
         }
 
         #endregion

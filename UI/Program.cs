@@ -1,29 +1,29 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 
 namespace UI
 {
     internal class Program
     {
-        static bool navigating = true;
         static string navMessage = "";
         static int navIndex = 0;
         static Option[] options = {
-            new Option("DNS Filter", ["off", "adult", "family", "secure"]),
-            new Option("Days Locked", ["0", "1", "7", "14", "30", "60", "365"]),
+            new Option("Hosts Filter", ["off", "adult", "gambling", "family"]),
+            new Option("CleanBrowsing DNS Filter", ["off", "adult", "family"]),
+            new Option("Disable PowerShell", ["yes", "no"]),
+            new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "365"]),
             new Option("Activate", Activate),
-            new Option("Docs", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/CleanBrowsing-Enforcer/blob/master/README.md") { UseShellExecute = true }))
+            new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
           
         };
-        static ValueTuple<int, int> initialPos = Console.GetCursorPosition();
+        static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
         static Config config = Config.Instance;
 
 
         static void Main(string[] args)
         {
-            Console.Title = "CleanBrowsing Enforcer";
-            while (navigating)
+            Console.Title = "Safe Surf";
+            while (true)
             {
                 PrintNav();
                 ConsoleKeyInfo keyInfo = Console.ReadKey();
@@ -44,26 +44,21 @@ namespace UI
 
         static void PrintNav()
         {
-            Console.SetCursorPosition(initialPos.Item1, initialPos.Item2);
+            Console.SetCursorPosition(initialCursorPos.Item1, initialCursorPos.Item2);
             for (int i = 0; i < Console.WindowHeight; i++)
                 Console.WriteLine(new string(' ', Console.WindowWidth - 1));
-            Console.SetCursorPosition(initialPos.Item1, initialPos.Item2);
+            Console.SetCursorPosition(initialCursorPos.Item1, initialCursorPos.Item2);
             Console.WriteLine(@"
-              ____ _                  ____                        _             
-             / ___| | ___  __ _ _ __ | __ ) _ __ _____      _____(_)_ __   __ _ 
-            | |   | |/ _ \/ _` | '_ \|  _ \| '__/ _ \ \ /\ / / __| | '_ \ / _` |
-            | |___| |  __/ (_| | | | | |_) | | | (_) \ V  V /\__ \ | | | | (_| |
-             \____|_|\___|\__,_|_| |_|____/|_|  \___/ \_/\_/ |___/_|_| |_|\__, |
-            | ____|_ __  / _| ___  _ __ ___ ___ _ __                      |___/ 
-            |  _| | '_ \| |_ / _ \| '__/ __/ _ \ '__|                           
-            | |___| | | |  _| (_) | | | (_|  __/ |                              
-            |_____|_| |_|_|  \___/|_|  \___\___|_|                              
-            
+     _____        __        _____             __ 
+    / ____|      / _|      / ____|           / _|
+   | (___   __ _| |_ ___  | (___  _   _ _ __| |_ 
+    \___ \ / _` |  _/ _ \  \___ \| | | | '__|  _|
+    ____) | (_| | ||  __/  ____) | |_| | |  | |  
+   |_____/ \__,_|_| \___| |_____/ \__,_|_|  |_|                                 
             "
             );
-            Console.WriteLine("Blocks explicit content and prohibits circumvention.");
-            Console.WriteLine("Use arrow and enter keys to navigate.");
-            Console.WriteLine("https://github.com/na-stewart\n");
+            Console.WriteLine("Blocks harmful content and prohibits circumvention.");
+            Console.WriteLine("Naviagte via arrow and enter keys.\n");
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == navIndex)
@@ -82,24 +77,19 @@ namespace UI
                 foreach (Option option in options)
                     if (!option.isExecutable())
                         config.Write(option.Name, option.ToString());
-                if (options[0].ToString().Equals("off"))
-                    navMessage = "CleanBrowsing disabled.";
-                else
-                {
-                    config.Write("Date Locked", DateTime.Now.ToString());
-                    navMessage = "CleanBrowsing activated!";
-                    Process process = new Process();
-                    process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
-                    process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")}\"";
-                    process.Start();
-                    process.WaitForExit();
-                    PrintNav();
-                }
+                config.Write("Date Locked", DateTime.Now.ToString());       
+                Process process = new Process();
+                process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSExecutor.exe");
+                process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSDaemon.exe")}\"";
+                process.Start();
+                process.WaitForExit();
+                navMessage = "Safe Surf activated!";
+                PrintNav();
             }
             catch (IOException)
             {
                 DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
-                navMessage = $"Enforcer is locked! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")))}.";
+                navMessage = $"Safe Surf enforcer is active! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")))}.";
             }
         }
     }

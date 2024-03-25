@@ -2,14 +2,27 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>CleanBrowsing Enforcer</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Title>CleanBrowsing Enforcer</Title>
-    <Authors>https://github.com/na-stewart</Authors>
-    <Company>https://github.com/na-stewart</Company>
+    <StartupObject>UI.Program</StartupObject>
+    <AssemblyName>Safe Surf</AssemblyName>
+    <ApplicationIcon>safe-surf.ico</ApplicationIcon>
+    <Version>0.1</Version>
+    <AssemblyVersion>0.1</AssemblyVersion>
+    <FileVersion>0.1</FileVersion>
+    <Title>$(AssemblyName)</Title>
+    <PackageId></PackageId>
+    <Authors></Authors>
+    <Company></Company>
+    <Description></Description>
+    <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>
+    <Product></Product>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="safe-surf.ico" />
+  </ItemGroup>
 
 </Project>

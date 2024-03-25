@@ -16,23 +16,26 @@ namespace Enforcer
         [DllImport("user32.dll")]
         public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         bool isLockActive = true;
+        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         Config config = Config.Instance;
         List<FileStream> filePadlocks = new List<FileStream>();
 
         public Main(string[] args)
         {
-            Text = "CleanBrowsing Enforcer";
-            if (config.Read("days-locked").Equals("0"))
+            this.InitializeComponent();
+            SetHosts();
+            if (config.Read("days-enforced").Equals("0"))
             {
-                RegisterStartupTask();  
-                SetCleanBrowsingDNS(false);
+                RegisterStartupTask();
+                SetCleanBrowsingDNS();
             }
             else
             {
+                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeWatchdog(args);
-                ShutdownBlockReasonCreate(Handle, "Lock is active.");
                 InitializeLock();
             }
+            Environment.Exit(0);
         }
 
         DateTime? GetNetworkTime()
@@ -40,18 +43,15 @@ namespace Enforcer
             DateTime? networkDateTime = null;
             try
             {
-                const string ntpServer = "pool.ntp.org";
                 var ntpData = new byte[48];
                 ntpData[0] = 0x1B;
-                var addresses = Dns.GetHostEntry(ntpServer).AddressList;
-                var ipEndPoint = new IPEndPoint(addresses[0], 123);
                 var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socket.Connect(ipEndPoint);
+                socket.Connect(new IPEndPoint(Dns.GetHostEntry("pool.ntp.org").AddressList[0], 123));
                 socket.Send(ntpData);
                 socket.Receive(ntpData);
                 socket.Close();
-                ulong intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
-                ulong fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
+                var intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
+                var fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
                 var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
                 networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
             }
@@ -61,22 +61,22 @@ namespace Enforcer
 
         bool IsExpired()
         {
-            DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
-            DateTime expirationDate = parsedDateLocked.AddDays(int.Parse(config.Read("days-locked")));
-            DateTime? networkTime = GetNetworkTime();
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateLocked);
+            var networkTime = GetNetworkTime();
+            var expirationDate = parsedDateLocked.AddDays(int.Parse(config.Read("days-enforced")));
             return networkTime == null ? false : networkTime >= expirationDate;
         }
 
         void InitializeLock()
         {
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
-            foreach (var file in Directory.GetFiles(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)))
+            filePadlocks.Add(new FileStream("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", FileMode.Open, FileAccess.Read, FileShare.Read));
+            foreach (var file in Directory.GetFiles(exePath))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isLockActive)
             {
                 if (IsExpired())
                 {
-                    SetCleanBrowsingDNS(true);
                     RemoveStartupTask();
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
@@ -84,11 +84,12 @@ namespace Enforcer
                 }
                 else
                 {
-                    SetCleanBrowsingDNS(false);
+                    SetCleanBrowsingDNS();
                     RegisterStartupTask();
-                    DisablePowerShell();
+                    if (config.Read("disable-powershell").Equals("yes"))
+                        DisablePowerShell();
                 }
-                Thread.Sleep(5000);
+                Thread.Sleep(3000);
             }
         }
 
@@ -96,8 +97,8 @@ namespace Enforcer
         {
             using (Process executor = new Process())
             {
-                executor.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
@@ -115,19 +116,19 @@ namespace Enforcer
                     watchdog.Close();
                     watchdog = Process.GetProcessById(StartWatchdog());
                 }
-            });       
+            });
         }
 
         void RegisterStartupTask()
         {
             using (var taskService = new TaskService())
             {
-                var task = taskService.GetTask("CleanBrowsing Enforcer");
+                var task = taskService.GetTask("Safe Surf");
                 if (task == null)
                 {
                     var taskDefinition = taskService.NewTask();
                     taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                    taskDefinition.RegistrationInfo.Description = "Runs CleanBrowsing Enforcer on startup.";
+                    taskDefinition.RegistrationInfo.Description = "Runs Safe Surf on startup.";
                     taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                     taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                     taskDefinition.Triggers.Add(new LogonTrigger());
@@ -135,9 +136,9 @@ namespace Enforcer
                     {
                         StartBoundary = DateTime.Now,
                         Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
-                    });          
-                    taskDefinition.Actions.Add(new ExecAction(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "CBEDaemon.exe")));
-                    taskService.RootFolder.RegisterTaskDefinition("CleanBrowsing Enforcer", taskDefinition);
+                    });
+                    taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    taskService.RootFolder.RegisterTaskDefinition("Safe Surf", taskDefinition);
                 }
                 else
                     task.Enabled = true;
@@ -152,25 +153,20 @@ namespace Enforcer
             }
         }
 
-        void SetCleanBrowsingDNS(bool reset)
+        void SetCleanBrowsingDNS()
         {
             try
             {
                 string[]? dns;
-                string dnsFilter = config.Read("dns-filter");
-                if (reset || dnsFilter.Equals("off"))
+                if (config.Read("cleanbrowsing-dns-filter").Equals("off"))
                     dns = null;
-                else if (dnsFilter.Equals("adult"))
-                    dns = ["185.228.168.10", "185.228.169.11"];
-                else if (dnsFilter.Equals("family"))
+                else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
                     dns = ["185.228.168.168", "185.228.169.168"];
                 else
-                    dns = ["185.228.168.9", "185.228.169.9"];
+                    dns = ["185.228.168.10", "185.228.169.11"];
                 var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
                 if (currentInterface == null) return;
-                var objMC = new ManagementClass("Win32_NetworkAdapterConfiguration");
-                var objMOC = objMC.GetInstances();
-                foreach (ManagementObject objMO in objMOC)
+                foreach (ManagementObject objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances())
                 {
                     if ((bool)objMO["IPEnabled"])
                     {
@@ -197,12 +193,19 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
+        void SetHosts()
+        {
+            if (config.Read("hosts-filter") == "off")
+                File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
+            else
+                File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
+        }
+
         void DisablePowerShell()
         {
             foreach (Process process in Process.GetProcesses())
             {
-                string windowTitle = process.MainWindowTitle;
-                if (!string.IsNullOrEmpty(windowTitle) && windowTitle.Contains("Windows PowerShell"))
+                if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("Windows PowerShell"))
                     process.Kill();
             }
         }
