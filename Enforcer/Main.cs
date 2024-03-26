@@ -25,9 +25,10 @@ namespace Enforcer
         {
             InitializeComponent();
             if (config.Read("days-enforced").Equals("0"))
-            {
-                RegisterStartupTask();
+            {        
                 SetCleanBrowsingDNS();
+                TryToSetHosts();
+                RegisterStartupTask();
             }
             else
             {
