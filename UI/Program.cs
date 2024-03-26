@@ -6,6 +6,7 @@ namespace UI
     internal class Program
     {
         static string navMessage = "";
+        static string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         static int navIndex = 0;
         static Option[] options = {
             new Option("Hosts Filter", ["off", "adult", "gambling", "family"]),
@@ -79,8 +80,8 @@ namespace UI
                         config.Write(option.Name, option.ToString());
                 config.Write("date-enforced", DateTime.Now.ToString());       
                 Process process = new Process();
-                process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSExecutor.exe");
-                process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSDaemon.exe")}\"";
+                process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
                 process.Start();
                 process.WaitForExit();
                 navMessage = "Safe Surf executed successfully!";

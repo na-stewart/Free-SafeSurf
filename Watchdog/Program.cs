@@ -5,6 +5,8 @@ namespace Watchdog
 {
     internal static class Program
     {
+        static string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
         static void Main(string[] args)
         {
             using (var mutex = new Mutex(false, "SSWatchdog"))
@@ -25,8 +27,7 @@ namespace Watchdog
         static int StartDaemon()
         {  
             using (Process executor = new Process())
-            {
-                var exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            {           
                 executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.RedirectStandardOutput = true;
