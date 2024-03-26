@@ -69,7 +69,6 @@ namespace Enforcer
         void InitializeLock()
         {
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
-            filePadlocks.Add(new FileStream("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isLockActive)
@@ -133,24 +132,16 @@ namespace Enforcer
             using (var taskService = new TaskService())
             {
                 var task = taskService.GetTask("SafeSurf");
-                if (task == null)
-                {
-                    var taskDefinition = taskService.NewTask();
-                    taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                    taskDefinition.RegistrationInfo.Description = "Runs SafeSurf on startup.";
-                    taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
-                    taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-                    taskDefinition.Triggers.Add(new LogonTrigger());
-                    taskDefinition.Triggers.Add(new TimeTrigger()
-                    {
-                        StartBoundary = DateTime.Now,
-                        Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
-                    });
-                    taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    taskService.RootFolder.RegisterTaskDefinition("SafeSurf", taskDefinition);
-                }
-                else
-                    task.Enabled = true;
+                if (task != null)
+                    taskService.RootFolder.DeleteTask("SafeSurf");
+                var taskDefinition = taskService.NewTask();
+                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+                taskDefinition.RegistrationInfo.Description = "Runs SafeSurf on startup.";
+                taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
+                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+                taskDefinition.Triggers.Add(new LogonTrigger());
+                taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                taskService.RootFolder.RegisterTaskDefinition("SafeSurf", taskDefinition);
             }
         }
 
@@ -215,6 +206,7 @@ namespace Enforcer
                         var hosts = File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts"));
                         File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", hosts);
                     }
+                    filePadlocks.Add(new FileStream("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", FileMode.Open, FileAccess.Read, FileShare.Read));
                     hostsSet = true;
                 }
             }
