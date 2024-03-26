@@ -16,14 +16,14 @@ namespace Enforcer
         [DllImport("user32.dll")]
         public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         bool isLockActive = true;
-        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        bool hostsSet = false;
+        string exePath = "C:\\Users\\Aidan Stewart\\source\\repos\\na-stewart\\CleanBrowsing-Enforcer\\bin";
         Config config = Config.Instance;
         List<FileStream> filePadlocks = new List<FileStream>();
 
         public Main(string[] args)
         {
             InitializeComponent();
-            SetHosts();
             if (config.Read("days-enforced").Equals("0"))
             {
                 RegisterStartupTask();
@@ -87,7 +87,8 @@ namespace Enforcer
                     if (config.Read("disable-powershell").Equals("yes"))
                         killPowerShell();
                     SetCleanBrowsingDNS();
-                    RegisterStartupTask();              
+                    RegisterStartupTask();
+                    SetHosts();
                 }
                 Thread.Sleep(3000);
             }
@@ -204,13 +205,21 @@ namespace Enforcer
 
         void SetHosts()
         {
-            if (config.Read("hosts-filter") == "off")
-                File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
-            else
+            try
             {
-                string hosts = File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts"));
-                File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", hosts);
-            }           
+                if (!hostsSet)
+                {
+                    if (config.Read("hosts-filter") == "off")
+                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
+                    else
+                    {
+                        var hosts = File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts"));
+                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", hosts);
+                    }
+                    hostsSet = true;
+                }
+            }
+            catch (IOException) { }
         }
 
         protected override void WndProc(ref Message aMessage)
