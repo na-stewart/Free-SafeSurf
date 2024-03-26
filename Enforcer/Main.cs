@@ -202,10 +202,7 @@ namespace Enforcer
                     if (config.Read("hosts-filter") == "off")
                         File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
                     else
-                    {
-                        var hosts = File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts"));
-                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", hosts);
-                    }
+                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
                     filePadlocks.Add(new FileStream("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", FileMode.Open, FileAccess.Read, FileShare.Read));
                     hostsSet = true;
                 }
