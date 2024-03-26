@@ -87,7 +87,7 @@ namespace Enforcer
                         killPowerShell();
                     RegisterStartupTask();
                     SetCleanBrowsingDNS();
-                    SetHosts();
+                    TryToSetHosts();
                 }
                 Thread.Sleep(4000);
             }
@@ -202,7 +202,7 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void SetHosts()
+        void TryToSetHosts()
         {
             try
             {
