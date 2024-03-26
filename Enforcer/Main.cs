@@ -1,6 +1,7 @@
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Management;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -72,7 +73,7 @@ namespace Enforcer
         {
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             filePadlocks.Add(new FileStream("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", FileMode.Open, FileAccess.Read, FileShare.Read));
-            foreach (var file in Directory.GetFiles(exePath))
+            foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isLockActive)
             {
@@ -86,20 +87,14 @@ namespace Enforcer
                 else
                 {
                     if (config.Read("disable-powershell").Equals("yes"))
-                    {
-                        foreach (Process process in Process.GetProcesses())
-                        {
-                            if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("Windows PowerShell"))
-                                process.Kill();
-                        }
-                    }       
+                        killPowerShell();
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();              
                 }
                 Thread.Sleep(3000);
             }
         }
-
+      
         int StartWatchdog()
         {
             using (Process executor = new Process())
@@ -109,6 +104,15 @@ namespace Enforcer
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
+            }
+        }
+
+        void killPowerShell()
+        {
+            foreach (Process process in Process.GetProcesses())
+            {
+                if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("Windows PowerShell"))
+                    process.Kill();
             }
         }
 
