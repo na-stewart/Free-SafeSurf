@@ -74,19 +74,19 @@ namespace Enforcer
             while (isLockActive)
             {
                 if (IsExpired())
-                {
-                    RemoveStartupTask();
+                {              
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
+                    RemoveStartupTask();
                     isLockActive = false;
                 }
                 else
                 {
                     if (config.Read("disable-powershell").Equals("yes"))
-                        killPowerShell();
-                    RegisterStartupTask();
+                        killPowerShell();               
                     SetCleanBrowsingDNS();
                     TryToSetHosts();
+                    RegisterStartupTask();
                 }
                 Thread.Sleep(4000);
             }
