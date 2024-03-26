@@ -86,8 +86,8 @@ namespace Enforcer
                 {
                     if (config.Read("disable-powershell").Equals("yes"))
                         killPowerShell();
-                    SetCleanBrowsingDNS();
                     RegisterStartupTask();
+                    SetCleanBrowsingDNS();
                     SetHosts();
                 }
                 Thread.Sleep(3000);
