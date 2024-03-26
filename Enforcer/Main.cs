@@ -1,9 +1,10 @@
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
+using System.Globalization;
 using System.Management;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Task = System.Threading.Tasks.Task;
 
@@ -16,7 +17,7 @@ namespace Enforcer
         public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         bool isLockActive = true;
         bool hostsSet = false;
-        string exePath = "C:\\Users\\Aidan Stewart\\source\\repos\\na-stewart\\CleanBrowsing-Enforcer\\bin";
+        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         Config config = Config.Instance;
         List<FileStream> filePadlocks = new List<FileStream>();
 
@@ -42,17 +43,13 @@ namespace Enforcer
             DateTime? networkDateTime = null;
             try
             {
-                var ntpData = new byte[48];
-                ntpData[0] = 0x1B;
-                var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socket.Connect(new IPEndPoint(Dns.GetHostEntry("pool.ntp.org").AddressList[0], 123));
-                socket.Send(ntpData);
-                socket.Receive(ntpData);
-                socket.Close();
-                ulong intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
-                ulong fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
-                var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
-                networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
+                var client = new TcpClient("time.nist.gov", 13);
+                using (var streamReader = new StreamReader(client.GetStream()))
+                {
+                    var response = streamReader.ReadToEnd();
+                    var utcDateTimeString = response.Substring(7, 17);
+                    networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                }
             }
             catch (SocketException) { }
             return networkDateTime;
@@ -140,6 +137,11 @@ namespace Enforcer
                 taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                 taskDefinition.Triggers.Add(new LogonTrigger());
+                taskDefinition.Triggers.Add(new TimeTrigger()
+                {
+                    StartBoundary = DateTime.Now,
+                    Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
+                });
                 taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
                 taskService.RootFolder.RegisterTaskDefinition("SafeSurf", taskDefinition);
             }
