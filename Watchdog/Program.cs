@@ -23,11 +23,12 @@ namespace Watchdog
         }
         
         static int StartDaemon()
-        {
+        {  
             using (Process executor = new Process())
             {
-                executor.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
+                var exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());

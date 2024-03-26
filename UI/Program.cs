@@ -77,7 +77,7 @@ namespace UI
                 foreach (Option option in options)
                     if (!option.isExecutable())
                         config.Write(option.Name, option.ToString());
-                config.Write("Date Locked", DateTime.Now.ToString());       
+                config.Write("date-enforced", DateTime.Now.ToString());       
                 Process process = new Process();
                 process.StartInfo.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSExecutor.exe");
                 process.StartInfo.Arguments = $"\"{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SSDaemon.exe")}\"";
@@ -88,8 +88,8 @@ namespace UI
             }
             catch (IOException)
             {
-                DateTime.TryParse(config.Read("date-locked"), out DateTime parsedDateLocked);
-                navMessage = $"Safe Surf enforcer is active! No changes can be made until {parsedDateLocked.AddDays(int.Parse(config.Read("days-enforced")))}.";
+                DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
+                navMessage = $"Safe Surf enforcer is active! No changes can be made until {parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
             }
         }
     }

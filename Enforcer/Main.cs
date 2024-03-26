@@ -1,5 +1,6 @@
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
+using System.Globalization;
 using System.Management;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -43,15 +44,18 @@ namespace Enforcer
             DateTime? networkDateTime = null;
             try
             {
+                const string ntpServer = "pool.ntp.org";
                 var ntpData = new byte[48];
                 ntpData[0] = 0x1B;
+                var addresses = Dns.GetHostEntry(ntpServer).AddressList;
+                var ipEndPoint = new IPEndPoint(addresses[0], 123);
                 var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socket.Connect(new IPEndPoint(Dns.GetHostEntry("pool.ntp.org").AddressList[0], 123));
+                socket.Connect(ipEndPoint);
                 socket.Send(ntpData);
                 socket.Receive(ntpData);
                 socket.Close();
-                var intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
-                var fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
+                ulong intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
+                ulong fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
                 var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
                 networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
             }
@@ -61,9 +65,9 @@ namespace Enforcer
 
         bool IsExpired()
         {
-            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateLocked);
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateLocked.AddDays(int.Parse(config.Read("days-enforced")));
+            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
             return networkTime == null ? false : networkTime >= expirationDate;
         }
 
@@ -85,9 +89,13 @@ namespace Enforcer
                 else
                 {
                     if (config.Read("disable-powershell").Equals("yes"))
+                    {
                         foreach (Process process in Process.GetProcesses())
-                            if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("PowerShell"))
+                        {
+                            if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("Windows PowerShell"))
                                 process.Kill();
+                        }
+                    }       
                     SetCleanBrowsingDNS();
                     RegisterStartupTask();              
                 }
@@ -125,12 +133,12 @@ namespace Enforcer
         {
             using (var taskService = new TaskService())
             {
-                var task = taskService.GetTask("Safe Surf");
+                var task = taskService.GetTask("SafeSurf");
                 if (task == null)
                 {
                     var taskDefinition = taskService.NewTask();
                     taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                    taskDefinition.RegistrationInfo.Description = "Runs Safe Surf on startup.";
+                    taskDefinition.RegistrationInfo.Description = "Runs SafeSurf on startup.";
                     taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                     taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                     taskDefinition.Triggers.Add(new LogonTrigger());
@@ -140,7 +148,7 @@ namespace Enforcer
                         Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
                     });
                     taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    taskService.RootFolder.RegisterTaskDefinition("Safe Surf", taskDefinition);
+                    taskService.RootFolder.RegisterTaskDefinition("SafeSurf", taskDefinition);
                 }
                 else
                     task.Enabled = true;
@@ -151,7 +159,7 @@ namespace Enforcer
         {
             using (var taskService = new TaskService())
             {
-                taskService.RootFolder.DeleteTask("CleanBrowsing Enforcer");
+                taskService.RootFolder.DeleteTask("SafeSurf");
             }
         }
 
@@ -200,7 +208,10 @@ namespace Enforcer
             if (config.Read("hosts-filter") == "off")
                 File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
             else
-                File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
+            {
+                string hosts = File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts"));
+                File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", hosts);
+            }           
         }
 
         protected override void WndProc(ref Message aMessage)
