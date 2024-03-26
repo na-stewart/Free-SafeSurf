@@ -44,13 +44,10 @@ namespace Enforcer
             DateTime? networkDateTime = null;
             try
             {
-                const string ntpServer = "pool.ntp.org";
                 var ntpData = new byte[48];
                 ntpData[0] = 0x1B;
-                var addresses = Dns.GetHostEntry(ntpServer).AddressList;
-                var ipEndPoint = new IPEndPoint(addresses[0], 123);
                 var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socket.Connect(ipEndPoint);
+                socket.Connect(new IPEndPoint(Dns.GetHostEntry("pool.ntp.org").AddressList[0], 123));
                 socket.Send(ntpData);
                 socket.Receive(ntpData);
                 socket.Close();
