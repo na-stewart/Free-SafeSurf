@@ -13,13 +13,13 @@ namespace Enforcer
 {
     public partial class Main : Form
     {
-        [DllImport("user32.dll")]
-        public extern static bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        bool isLockActive = true;
-        bool hostsSet = false;
-        string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        Config config = Config.Instance;
-        List<FileStream> filePadlocks = new List<FileStream>();
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
+        readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly Config config = Config.Instance;
+        readonly List<FileStream> filePadlocks = [];
+        bool isEnforcerActive = true;
 
         public Main(string[] args)
         {
@@ -27,14 +27,14 @@ namespace Enforcer
             if (config.Read("days-enforced").Equals("0"))
             {        
                 SetCleanBrowsingDNS();
-                TryToSetHosts();
+                SetHosts();
                 RegisterStartupTask();
             }
             else
             {
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
-                InitializeWatchdog(args);
                 InitializeLock();
+                InitializeWatchdog(args);
             }
             Environment.Exit(0);
         }
@@ -52,6 +52,7 @@ namespace Enforcer
                     networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
                 }
             }
+            catch (FormatException) { }
             catch (SocketException) { }
             return networkDateTime;
         }
@@ -69,21 +70,30 @@ namespace Enforcer
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-            while (isLockActive)
+            while (isEnforcerActive)
             {
                 if (IsExpired())
                 {              
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
-                    RemoveStartupTask();
-                    isLockActive = false;
+                    using (var taskService = new TaskService())
+                    {
+                        taskService.RootFolder.DeleteTask("SafeSurf");
+                    }
+                    isEnforcerActive = false;
                 }
                 else
                 {
                     if (config.Read("disable-powershell").Equals("yes"))
-                        killPowerShell();               
+                    {
+                        foreach (Process process in Process.GetProcesses())
+                        {
+                            if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("PowerShell"))
+                                process.Kill();
+                        }
+                    }
                     SetCleanBrowsingDNS();
-                    TryToSetHosts();
+                    SetHosts();
                     RegisterStartupTask();
                 }
                 Thread.Sleep(4000);
@@ -102,21 +112,12 @@ namespace Enforcer
             }
         }
 
-        void killPowerShell()
-        {
-            foreach (Process process in Process.GetProcesses())
-            {
-                if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("Windows PowerShell"))
-                    process.Kill();
-            }
-        }
-
         void InitializeWatchdog(string[] args)
         {
             Process watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
             Task.Run(() =>
             {
-                while (isLockActive)
+                while (isEnforcerActive)
                 {
                     watchdog.WaitForExit();
                     watchdog.Close();
@@ -129,9 +130,7 @@ namespace Enforcer
         {
             using (var taskService = new TaskService())
             {
-                var task = taskService.GetTask("SafeSurf");
-                if (task != null)
-                    taskService.RootFolder.DeleteTask("SafeSurf");
+                taskService.RootFolder.DeleteTask("SafeSurf", false);
                 var taskDefinition = taskService.NewTask();
                 taskDefinition.Settings.DisallowStartIfOnBatteries = false;
                 taskDefinition.RegistrationInfo.Description = "Runs SafeSurf on startup.";
@@ -145,14 +144,6 @@ namespace Enforcer
                 });
                 taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
                 taskService.RootFolder.RegisterTaskDefinition("SafeSurf", taskDefinition);
-            }
-        }
-
-        void RemoveStartupTask()
-        {
-            using (var taskService = new TaskService())
-            {
-                taskService.RootFolder.DeleteTask("SafeSurf");
             }
         }
 
@@ -196,19 +187,25 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void TryToSetHosts()
+        void SetHosts()
         {
             try
             {
-                if (!hostsSet)
+                var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
+                var hosts = "C:\\WINDOWS\\System32\\drivers\\etc\\hosts";
+                if (config.Read("hosts-filter") == "off")
+                    File.WriteAllText(hosts, "");
+                else
                 {
-                    if (config.Read("hosts-filter") == "off")
-                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", "");
-                    else
-                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
-                    filePadlocks.Add(new FileStream("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", FileMode.Open, FileAccess.Read, FileShare.Read));
-                    hostsSet = true;
+                    using (StreamReader filterHostsReader = new StreamReader(filterHosts))
+                    using (StreamReader hostsReader = new StreamReader(hosts))
+                    using (StreamWriter hostsWriter = new StreamWriter(hosts, false))
+                    {
+                        if (!hostsReader.ReadLine().Contains("StevenBlack/hosts"))
+                            hostsWriter.WriteLine(filterHostsReader.ReadToEnd());
+                    }
                 }
+                filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
             }
             catch (IOException) { }
         }

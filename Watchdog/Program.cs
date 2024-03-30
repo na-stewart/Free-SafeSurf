@@ -16,9 +16,19 @@ namespace Watchdog
                     Process enforcer = Process.GetProcessById(int.Parse(args[0]));
                     while (true)
                     {
-                        enforcer.WaitForExit();
-                        enforcer.Close();
-                        enforcer = Process.GetProcessById(StartDaemon());
+                        try
+                        {
+                            using (File.Open(Path.Combine(exePath, "svchost.exe"), FileMode.Open, FileAccess.Write, FileShare.None))
+                            {
+                                break;
+                            }
+                        }
+                        catch (IOException ex)
+                        {
+                            enforcer.WaitForExit();
+                            enforcer.Close();
+                            enforcer = Process.GetProcessById(StartDaemon());
+                        }
                     }
                 }
             }
