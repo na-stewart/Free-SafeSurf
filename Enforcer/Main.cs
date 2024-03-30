@@ -38,7 +38,7 @@ namespace Enforcer
             else
             {
                 InitializeWatchdog(args);
-                ShutdownBlockReasonCreate(Handle, "CleanBrowsing Enforcer is locked.");
+                ShutdownBlockReasonCreate(Handle, "Lock is active.");
                 InitializeLock();
             }
         }
