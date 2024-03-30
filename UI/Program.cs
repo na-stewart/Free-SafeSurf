@@ -22,7 +22,7 @@ namespace UI
 
         static void Main(string[] args)
         {
-            Console.Title = "Safe Surf";
+            Console.Title = "SafeSurf";
             while (true)
             {
                 PrintNav();
