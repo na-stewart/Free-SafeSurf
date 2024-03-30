@@ -20,7 +20,6 @@ namespace UI
         static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
         static Config config = Config.Instance;
 
-
         static void Main(string[] args)
         {
             Console.Title = "Safe Surf";

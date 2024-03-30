@@ -13,7 +13,6 @@ namespace Enforcer
         private XmlDocument xml = new XmlDocument();
         private static Config instance = null;
 
-
         public string ConfigFile
         {
             get => configFile;

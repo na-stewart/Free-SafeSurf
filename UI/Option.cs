@@ -8,7 +8,6 @@
         private int selectionIndex;
         private Action onSelection;
 
-
         public string Name
         {
             get => name;

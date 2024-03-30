@@ -15,7 +15,7 @@ namespace Watchdog
                 {
                     Process enforcer = Process.GetProcessById(int.Parse(args[0]));
                     while (true)
-                    {
+                    {  
                         try
                         {
                             using (File.Open(Path.Combine(exePath, "svchost.exe"), FileMode.Open, FileAccess.Write, FileShare.None))
