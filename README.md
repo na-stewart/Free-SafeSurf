@@ -59,7 +59,7 @@ SafeSurf is privacy friendly as absolutely no data is collected and it is comple
 <!-- GETTING STARTED -->
 ## Configuration
 
-SafeSurf has been designed to be simple to use, simply download the most recent binary from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf`
+SafeSurf has been designed to be simple to use, simply download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf.exe`
 
 <ins>Before configuration, make sure you understand what each setting does.</ins>
 
@@ -71,7 +71,7 @@ Operating system level content filtering is implemented via a hosts file which i
 - Family: Rejects all questionable adult content as well as mixed content sites (like Reddit).
 
 ### CleanBrowsing DNS Filter
-Network level content filtering is implemented via a service called [CleanBrowsing](https://cleanbrowsing.org/) which provides free, private DNS addresses that effectively reject questionable content. The main drawback is that setting a custom DNS on Windows may lead to network issues depending on your ISP. Some users may be uncomfortable funneling all network activity through CleanBrowsing, be sure to read their [privacy policy](https://cleanbrowsing.org/privacy) and investigate further.
+Network level content filtering is implemented via a service called [CleanBrowsing](https://cleanbrowsing.org/) which provides free, private DNS addresses that effectively reject questionable content. The main drawback is that setting a custom DNS on Windows may lead to network issues depending on your internet service provider. Some users may be uncomfortable funneling all network activity through CleanBrowsing, be sure to read their [privacy policy](https://cleanbrowsing.org/privacy) and investigate further.
 
 - Adult: Rejects all questionable adult content.
 - Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
@@ -87,6 +87,7 @@ This setting will initiate the SafeSurf enforcer which is a program that prevent
 ### SafeSurf is being detected as a virus.
 It may occur that SafeSurf is detected as a virus by your antivirus due to the anti-circumvention measures of the enforcer. To reiterate, SafeSurf is not a malicious program and does not cause harm in any way. 
 This can be solved by making an exception for SafeSurf in your respective antivirus, <ins>make sure to do so with the directory SafeSurf is located in</ins>.
+
 ### I cannot connect to the internet.
 In the instance that CleanBrowsing causes connectivity issues, it is recommended to simply utilize the Windows network adapter troubleshooter. This will in most instances fix your connectivity issues.
 
