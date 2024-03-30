@@ -61,7 +61,7 @@ SafeSurf is privacy friendly as absolutely no data is collected and it is comple
 
 SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf.exe`
 
-<ins>Before configuration, make sure you understand what each setting does.</ins>
+<ins>Before activation, make sure you understand what each setting does.</ins>
 
 ### Hosts Filter
 Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the user's request to visit the site. The main drawback is that some content may fall through the cracks if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
