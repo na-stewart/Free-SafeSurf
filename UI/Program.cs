@@ -5,7 +5,7 @@ namespace UI
 {
     internal class Program
     {
-        static string navMessage = "";
+        static string notification = "";
         static string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         static int navIndex = 0;
         static Option[] options = {
@@ -67,7 +67,7 @@ namespace UI
                 Console.ResetColor();
                 Console.WriteLine(options[i].ToString());
             }
-            Console.WriteLine($"\n{navMessage}");
+            Console.WriteLine($"\n{notification}");
         }
 
         static void Execute()
@@ -83,13 +83,13 @@ namespace UI
                 process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
                 process.Start();
                 process.WaitForExit();
-                navMessage = "Safe Surf executed successfully!";
+                notification = "SafeSurf settings applied successfully!";
                 PrintNav();
             }
             catch (IOException)
             {
                 DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
-                navMessage = $"Safe Surf enforcer is active! No changes can be made until {parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
+                notification = $"SafeSurf enforcer is active! No changes can be made until {parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
             }
         }
     }
