@@ -59,7 +59,7 @@ SafeSurf is privacy friendly as absolutely no data is collected and it is comple
 <!-- GETTING STARTED -->
 ## Configuration
 
-SafeSurf has been designed to be simple to use, simply download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf.exe`
+SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf.exe`
 
 <ins>Before configuration, make sure you understand what each setting does.</ins>
 
