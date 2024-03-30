@@ -80,7 +80,7 @@ Network level content filtering is implemented via a service called [CleanBrowsi
 This setting is only utilized when the SafeSurf enforcer is active. If enabled, any Windows PowerShell instance will be closed in order to prevent circumvention. 
 
 ### Days Enforced
-This setting will initialize the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. It is highly recommended to start with 1 to 7 days and increase the time span once your settings are working well for you.
+This setting will initiate the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. It is recommended to experiment with SafeSurf and see what works well for you before enabling the enforcer.
 
 ## Troubleshooting
 
