@@ -42,7 +42,7 @@ namespace Watchdog
                     {  
                         try
                         {
-                            using (File.Open(Path.Combine(exePath, "svchost.exe"), FileMode.Open, FileAccess.Write, FileShare.None))
+                            using (File.Open(Path.Combine(exePath, "SafeSurf.exe"), FileMode.Open, FileAccess.Write, FileShare.None))
                             {
                                 break;
                             }
