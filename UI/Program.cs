@@ -120,7 +120,7 @@ namespace UI
             }
         }
 
-        void AddDefenderExclusion()
+        static void AddDefenderExclusion()
         {
             var powershell = new ProcessStartInfo("powershell")
             {

@@ -171,7 +171,7 @@ namespace Enforcer
                 taskService.RootFolder.DeleteTask("SafeSurf", false);
                 var taskDefinition = taskService.NewTask();
                 taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Description = "Runs SafeSurf on startup.";
+                taskDefinition.RegistrationInfo.Description = "SafeSurf startup and heartbeat task.";
                 taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                 taskDefinition.Triggers.Add(new LogonTrigger());
