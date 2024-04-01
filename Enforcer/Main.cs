@@ -246,21 +246,21 @@ namespace Enforcer
 
         public void ShowMotivation()
         {
-            string[] quotes = new string[] { 
-                "You either suffer the pain of discipline or the pain or regret.",
+            string[] quotes = new string[] {
+                "You can either suffer the pain of discipline or live with the pain of regret.",
                 "The clock is ticking. Are you becoming the person you want to be?",
                 "Treat each day as a new life and at once begin to live.",
-                "If you stop now, suddenly years will pass and your regrets will be far behind you.",
-                "There are no regrets in life, just lessons. It's time to do the right by yourself.",
-                "Don't let this lead to regret that will live with you the rest of your life.",
-                "This is nothing to be proud of. Do something worthy of your time.",
+                "If you stop bad habits now, suddenly years will pass and your regrets will be far behind you.",
+                "There are no regrets in life, just lessons. You must do right by yourself.",
+                "Ever tried. Ever failed. No matter. Try again. Fail again. Fail better.",
                 "The only person you are destined to become is who you decide to be.",
-                "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it! Get up and live!",
-                "Hardships often prepare ordinary people for extraordinary things. Find strength within to live with no regret.",
+                "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it! Wake up and live!",
+                "Hardships often prepare ordinary people for extraordinary things. Don't let it tear you down.",
                 "Be stronger than your strongest excuse or suffer the consequences.",
-                "Success is the sum of small efforts, repeated day in and day out. Continue towards a life of no regret.",
+                "Success is the sum of small efforts and sacrifices, repeated day in and day out. That is how you contribute towards a life without regret.",
                 "It won't be like this forever, take advantage of now and do right by yourself.",
-                "Regret born from ill-fated choices will surpass all other hardships."
+                "Regret born of ill-fated choices will surpass all other hardships.",
+                "Act as if what you do makes a difference, it does. Consequences can go both ways."
             };
             new ToastContentBuilder().AddText("SafeSurf").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
