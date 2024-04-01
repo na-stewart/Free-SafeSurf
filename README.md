@@ -81,10 +81,6 @@ This setting will initiate the SafeSurf enforcer which is a program that prevent
 
 ## Troubleshooting
 
-### SafeSurf is being detected as a virus.
-SafeSurf is not a malicious program, however It may occur that SafeSurf is detected as a virus by your antivirus due to the anti-circumvention measures of the enforcer.
-This can be solved by making an exception for SafeSurf in your respective antivirus, <ins>make sure to do so with the directory SafeSurf is located in</ins>.
-
 ### I cannot connect to the internet.
 In the instance that CleanBrowsing causes connectivity issues, it is recommended to simply utilize the Windows network adapter troubleshooter. This will in most instances fix your connectivity issues.
 
