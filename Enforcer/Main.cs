@@ -49,7 +49,6 @@ namespace Enforcer
         public Main(string[] args)
         {
             InitializeComponent();
-  
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
