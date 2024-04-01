@@ -75,17 +75,14 @@ Network level content filtering is implemented via a service called [CleanBrowsi
 
 - Adult: Rejects all questionable adult content.
 - Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
-
-### Disable PowerShell
-This setting is only utilized when the SafeSurf enforcer is active. If enabled, any Windows PowerShell instance will be closed in order to prevent circumvention. 
-
+  
 ### Days Enforced
 This setting will initiate the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. It is recommended to experiment with SafeSurf and see what works well for you before enabling the enforcer.
 
 ## Troubleshooting
 
 ### SafeSurf is being detected as a virus.
-It may occur that SafeSurf is detected as a virus by your antivirus due to the anti-circumvention measures of the enforcer. To reiterate, SafeSurf is not a malicious program and does not cause harm in any way. 
+SafeSurf is not a malicious program, however It may occur that SafeSurf is detected as a virus by your antivirus due to the anti-circumvention measures of the enforcer.
 This can be solved by making an exception for SafeSurf in your respective antivirus, <ins>make sure to do so with the directory SafeSurf is located in</ins>.
 
 ### I cannot connect to the internet.
