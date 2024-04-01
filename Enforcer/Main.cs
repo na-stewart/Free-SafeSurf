@@ -254,7 +254,7 @@ namespace Enforcer
                 "There are no regrets in life, just lessons. You must do right by yourself.",
                 "Ever tried. Ever failed. No matter. Try again. Fail again. Fail better.",
                 "The only person you are destined to become is who you decide to be.",
-                "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it! Wake up and live!",
+                "I'm not telling you it is going to be easy. IÂ’m telling you it's going to be worth it! Wake up and live!",
                 "Hardships often prepare ordinary people for extraordinary things. Don't let it tear you down.",
                 "Be stronger than your strongest excuse or suffer the consequences.",
                 "Success is the sum of small efforts and sacrifices, repeated day in and day out. That is how you contribute towards a life without regret.",
