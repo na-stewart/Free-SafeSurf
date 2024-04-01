@@ -1,5 +1,5 @@
+using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32.TaskScheduler;
-using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Management;
@@ -40,17 +40,17 @@ namespace Enforcer
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        readonly ManagementEventWatcher powershellWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace WHERE ProcessName = 'powershell.exe'"));
         readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Config config = Config.Instance;
-        readonly List<FileStream> filePadlocks = [];
+        readonly List<FileStream> filePadlocks = new List<FileStream> ();
         bool isEnforcerActive = true;
         Process watchdog;
 
         public Main(string[] args)
         {
             InitializeComponent();
-            AddDefenderExclusion();
+            if (config.Read("motiviation").Equals("on"))
+                ShowMotivation();    
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -59,9 +59,9 @@ namespace Enforcer
             }
             else
             {
-                InitializePowershellKiller();
                 InitializeWatchdog(args);
                 SetHosts();
+                AddDefenderExclusion();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");     
                 InitializeLock();      
             }
@@ -100,7 +100,6 @@ namespace Enforcer
                         filePadlock.Close();
                     using (var taskService = new TaskService()) 
                         taskService.RootFolder.DeleteTask("SafeSurf");
-                    powershellWatcher.Stop();
                     watchdog.Kill();
                     continue;
                 }
@@ -110,7 +109,6 @@ namespace Enforcer
                     RegisterStartupTask();       
                 }
                 Thread.Sleep(4000);
-                AddDefenderExclusion();
             }
         }
 
@@ -151,19 +149,6 @@ namespace Enforcer
             });
         }
 
-        void InitializePowershellKiller()
-        {
-            powershellWatcher.EventArrived += (object sender, EventArrivedEventArgs e) =>
-            {
-                try
-                {
-                    Process.GetProcessById(Convert.ToInt32(e.NewEvent.Properties["ProcessID"].Value)).Kill();
-                }
-                catch (ArgumentException) { }
-            };
-            powershellWatcher.Start();
-        }
-
         void RegisterStartupTask()
         {
             using (var taskService = new TaskService())
@@ -193,9 +178,9 @@ namespace Enforcer
                 if (!isEnforcerActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
                     dns = null;
                 else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
-                    dns = ["185.228.168.168", "185.228.169.168"];
+                    dns = new string[] { "185.228.168.168", "185.228.169.168" };
                 else if (config.Read("cleanbrowsing-dns-filter").Equals("adult"))
-                    dns = ["185.228.168.10", "185.228.169.11"];
+                    dns = new string[] { "185.228.168.10", "185.228.169.11" };
                 else
                     return;
                 var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
@@ -233,7 +218,7 @@ namespace Enforcer
             var hosts = "C:\\WINDOWS\\System32\\drivers\\etc\\hosts";
             try
             {
-                if (config.Read("hosts-filter") == "off")
+                if (config.Read("hosts-filter").Equals("off"))
                 {
                     if (!isEnforcerActive)
                         File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", string.Empty);
@@ -257,6 +242,27 @@ namespace Enforcer
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
             };
             Process.Start(powershell);
+        }
+
+        public void ShowMotivation()
+        {
+            string[] quotes = new string[] { 
+                "You either suffer the pain of discipline or the pain or regret.",
+                "The clock is ticking. Are you becoming the person you want to be?",
+                "Treat each day as a new life and at once begin to live while you still can.",
+                "If you quit now, suddenly years will pass and your regrets will be far behind you.",
+                "There are no regrets in life, just lessons. It's time to do the right by yourself.",
+                "Don't let this lead to regret that will live with you the rest of your life.",
+                "This is nothing to be proud of. Do something worthy of your time.",
+                "The only person you are destined to become is who you decide to be.",
+                "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it!",
+                "Hardships often prepare ordinary people for extraordinary things. Stay calm and move on.",
+                "Be stronger than your strongest excuse, the world isn't waiting for you.",
+                "Success is the sum of small efforts, repeated day in and day out. Continue towards the life you want.",
+                "It won't be like this forever, take advantage of now and do right by yourself.",
+                "Regret born from ill-fated choices will surpasses all other hardships."
+            };
+            new ToastContentBuilder().AddText("SafeSurf").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
         protected override void WndProc(ref Message aMessage)
