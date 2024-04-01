@@ -249,18 +249,18 @@ namespace Enforcer
             string[] quotes = new string[] { 
                 "You either suffer the pain of discipline or the pain or regret.",
                 "The clock is ticking. Are you becoming the person you want to be?",
-                "Treat each day as a new life and at once begin to live while you still can.",
-                "If you quit now, suddenly years will pass and your regrets will be far behind you.",
+                "Treat each day as a new life and at once begin to live.",
+                "If you stop now, suddenly years will pass and your regrets will be far behind you.",
                 "There are no regrets in life, just lessons. It's time to do the right by yourself.",
                 "Don't let this lead to regret that will live with you the rest of your life.",
                 "This is nothing to be proud of. Do something worthy of your time.",
                 "The only person you are destined to become is who you decide to be.",
                 "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it! Get up and live!",
-                "Hardships often prepare ordinary people for extraordinary things. Find strength within and live with no regret.",
-                "Be stronger than your strongest excuse, or suffer the consequences.",
+                "Hardships often prepare ordinary people for extraordinary things. Find strength within to live with no regret.",
+                "Be stronger than your strongest excuse or suffer the consequences.",
                 "Success is the sum of small efforts, repeated day in and day out. Continue towards a life of no regret.",
                 "It won't be like this forever, take advantage of now and do right by yourself.",
-                "Regret born from ill-fated choices will surpasses all other hardships."
+                "Regret born from ill-fated choices will surpass all other hardships."
             };
             new ToastContentBuilder().AddText("SafeSurf").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
