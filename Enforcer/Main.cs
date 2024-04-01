@@ -1,4 +1,5 @@
 using Microsoft.Win32.TaskScheduler;
+using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Management;
@@ -39,25 +40,30 @@ namespace Enforcer
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
+        readonly ManagementEventWatcher powershellWatcher = new ManagementEventWatcher(new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace WHERE ProcessName = 'powershell.exe'"));
         readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Config config = Config.Instance;
         readonly List<FileStream> filePadlocks = [];
         bool isEnforcerActive = true;
+        Process watchdog;
 
         public Main(string[] args)
         {
             InitializeComponent();
+            AddDefenderExclusion();
             if (config.Read("days-enforced").Equals("0"))
-            {        
+            {
+                isEnforcerActive = false;
                 SetCleanBrowsingDNS();
                 SetHosts();
-                RegisterStartupTask();
             }
             else
             {
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
-                InitializeLock();
+                InitializePowershellKiller();
                 InitializeWatchdog(args);
+                SetHosts();
+                InitializeLock();      
             }
             Environment.Exit(0);
         }
@@ -75,17 +81,9 @@ namespace Enforcer
                     networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
                 }
             }
-            catch (FormatException) { }
             catch (SocketException) { }
+            catch (ArgumentOutOfRangeException) { }
             return networkDateTime;
-        }
-
-        bool IsExpired()
-        {
-            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
-            var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
-            return networkTime == null ? false : networkTime >= expirationDate;
         }
 
         void InitializeLock()
@@ -96,39 +94,41 @@ namespace Enforcer
             while (isEnforcerActive)
             {
                 if (IsExpired())
-                {              
+                {
+                    isEnforcerActive = false;
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
-                    using (var taskService = new TaskService())
-                    {
+                    using (var taskService = new TaskService()) 
                         taskService.RootFolder.DeleteTask("SafeSurf");
-                    }
-                    isEnforcerActive = false;
+                    powershellWatcher.Stop();
+                    watchdog.Kill();
+                    continue;
                 }
                 else
-                {
-                    if (config.Read("disable-powershell").Equals("yes"))
-                    {
-                        foreach (Process process in Process.GetProcesses())
-                        {
-                            if (!string.IsNullOrEmpty(process.MainWindowTitle) && process.MainWindowTitle.Contains("PowerShell"))
-                                process.Kill();
-                        }
-                    }
-                    SetCleanBrowsingDNS();
-                    SetHosts();
-                    RegisterStartupTask();
+                {  
+                    SetCleanBrowsingDNS();      
+                    RegisterStartupTask();       
                 }
                 Thread.Sleep(4000);
+                AddDefenderExclusion();
             }
         }
-      
+
+        bool IsExpired()
+        {
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
+            var networkTime = GetNetworkTime();
+            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
+            return networkTime == null ? false : networkTime >= expirationDate;
+        }
+
         int StartWatchdog()
         {
             using (Process executor = new Process())
             {
                 executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.CreateNoWindow = true;
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
@@ -137,16 +137,31 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-            Process watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
+            watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
             Task.Run(() =>
             {
                 while (isEnforcerActive)
                 {
                     watchdog.WaitForExit();
                     watchdog.Close();
+                    if (!isEnforcerActive) 
+                        continue;
                     watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
+        }
+
+        void InitializePowershellKiller()
+        {
+            powershellWatcher.EventArrived += (object sender, EventArrivedEventArgs e) =>
+            {
+                try
+                {
+                    Process.GetProcessById(Convert.ToInt32(e.NewEvent.Properties["ProcessID"].Value)).Kill();
+                }
+                catch (ArgumentException) { }
+            };
+            powershellWatcher.Start();
         }
 
         void RegisterStartupTask()
@@ -175,12 +190,14 @@ namespace Enforcer
             try
             {
                 string[]? dns;
-                if (config.Read("cleanbrowsing-dns-filter").Equals("off"))
+                if (!isEnforcerActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
                     dns = null;
                 else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
                     dns = ["185.228.168.168", "185.228.169.168"];
-                else
+                else if (config.Read("cleanbrowsing-dns-filter").Equals("adult"))
                     dns = ["185.228.168.10", "185.228.169.11"];
+                else
+                    return;
                 var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
                 if (currentInterface == null) return;
                 foreach (ManagementObject objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances())
@@ -212,25 +229,34 @@ namespace Enforcer
 
         void SetHosts()
         {
+            var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
+            var hosts = "C:\\WINDOWS\\System32\\drivers\\etc\\hosts";
             try
             {
-                var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
-                var hosts = "C:\\WINDOWS\\System32\\drivers\\etc\\hosts";
                 if (config.Read("hosts-filter") == "off")
-                    File.WriteAllText(hosts, "");
+                {
+                    if (!isEnforcerActive)
+                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", string.Empty);
+                }
                 else
                 {
-                    using (StreamReader filterHostsReader = new StreamReader(filterHosts))
-                    using (StreamReader hostsReader = new StreamReader(hosts))
-                    using (StreamWriter hostsWriter = new StreamWriter(hosts, false))
-                    {
-                        if (!hostsReader.ReadLine().Contains("StevenBlack/hosts"))
-                            hostsWriter.WriteLine(filterHostsReader.ReadToEnd());
-                    }
+                    File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(filterHosts));
+                    filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
                 }
-                filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
             }
             catch (IOException) { }
+        }
+
+        void AddDefenderExclusion()
+        {
+            var powershell = new ProcessStartInfo("powershell")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                Verb = "runas",
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+            };
+            Process.Start(powershell);
         }
 
         protected override void WndProc(ref Message aMessage)

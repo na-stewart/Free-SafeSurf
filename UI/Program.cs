@@ -35,7 +35,6 @@ namespace UI
         static Option[] options = {
             new Option("Hosts Filter", ["off", "adult", "gambling", "family"]),
             new Option("CleanBrowsing DNS Filter", ["off", "adult", "family"]),
-            new Option("Disable PowerShell", ["yes", "no"]),
             new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "180", "365"]),
             new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
@@ -47,6 +46,7 @@ namespace UI
         static void Main(string[] args)
         {
             Console.Title = "SafeSurf";
+            AddDefenderExclusion();
             while (true)
             {
                 PrintNav();
@@ -101,20 +101,35 @@ namespace UI
                 foreach (Option option in options)
                     if (!option.isExecutable())
                         config.Write(option.Name, option.ToString());
-                config.Write("date-enforced", DateTime.Now.ToString());       
+                if (options[0].ToString() == "off" && options[1].ToString() == "off")
+                    config.Write("days-enforced", "0");
+                else
+                    config.Write("date-enforced", DateTime.Now.ToString());
                 Process process = new Process();
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
                 process.Start();
-                process.WaitForExit();
                 notification = "SafeSurf settings applied successfully!";
-                PrintNav();
             }
             catch (IOException)
             {
                 DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
                 notification = $"SafeSurf enforcer is active! No changes can be made until {parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
             }
+        }
+
+        void AddDefenderExclusion()
+        {
+            var powershell = new ProcessStartInfo("powershell")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                Verb = "runas",
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+            };
+            Process.Start(powershell);
         }
     }
 }

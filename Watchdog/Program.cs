@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -39,20 +40,10 @@ namespace Watchdog
                 {
                     Process enforcer = Process.GetProcessById(int.Parse(args[0]));
                     while (true)
-                    {  
-                        try
-                        {
-                            using (File.Open(Path.Combine(exePath, "SafeSurf.exe"), FileMode.Open, FileAccess.Write, FileShare.None))
-                            {
-                                break;
-                            }
-                        }
-                        catch (IOException ex)
-                        {
-                            enforcer.WaitForExit();
-                            enforcer.Close();
-                            enforcer = Process.GetProcessById(StartDaemon());
-                        }
+                    {
+                        enforcer.WaitForExit();
+                        enforcer.Close();
+                        enforcer = Process.GetProcessById(StartDaemon());
                     }
                 }
             }
@@ -65,6 +56,7 @@ namespace Watchdog
                 executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.RedirectStandardOutput = true;
+                executor.StartInfo.CreateNoWindow = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
             }

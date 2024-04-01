@@ -50,11 +50,11 @@ namespace Enforcer
         {
             var eventLogName = "Application";
             var eventLogSource = "SafeSurf";
-            if (!EventLog.Exists(eventLogSource))
+            if (!EventLog.SourceExists(eventLogSource))
                 EventLog.CreateEventSource(eventLogSource, eventLogName);
             EventLog eventLog = new EventLog(eventLogName);
             eventLog.Source = eventLogSource;
-            eventLog.WriteEntry(ex.StackTrace, EventLogEntryType.Error);
+            eventLog.WriteEntry(ex.ToString(), EventLogEntryType.Error);
         }   
     }
 }

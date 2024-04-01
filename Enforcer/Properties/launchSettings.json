@@ -1,8 +1,7 @@
 {
   "profiles": {
     "Enforcer": {
-      "commandName": "Project",
-      "workingDirectory": "C:\\Users\\Aidan Stewart\\source\\repos\\na-stewart\\CleanBrowsing-Enforcer\\bin"
+      "commandName": "Project"
     }
   }
 }
