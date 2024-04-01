@@ -54,15 +54,15 @@ namespace Enforcer
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
-                SetCleanBrowsingDNS();
                 SetHosts();
+                SetCleanBrowsingDNS();
             }
             else
             {
-                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializePowershellKiller();
                 InitializeWatchdog(args);
                 SetHosts();
+                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");     
                 InitializeLock();      
             }
             Environment.Exit(0);
