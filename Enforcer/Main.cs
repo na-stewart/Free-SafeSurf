@@ -49,7 +49,7 @@ namespace Enforcer
         public Main(string[] args)
         {
             InitializeComponent();
-            if (config.Read("motiviation").Equals("on"))
+            if (config.Read("motivation").Equals("on"))
                 ShowMotivation();    
             if (config.Read("days-enforced").Equals("0"))
             {
@@ -255,10 +255,10 @@ namespace Enforcer
                 "Don't let this lead to regret that will live with you the rest of your life.",
                 "This is nothing to be proud of. Do something worthy of your time.",
                 "The only person you are destined to become is who you decide to be.",
-                "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it!",
-                "Hardships often prepare ordinary people for extraordinary things. Stay calm and move on.",
-                "Be stronger than your strongest excuse, the world isn't waiting for you.",
-                "Success is the sum of small efforts, repeated day in and day out. Continue towards the life you want.",
+                "I’m not telling you it is going to be easy. I’m telling you it’s going to be worth it! Get up and live!",
+                "Hardships often prepare ordinary people for extraordinary things. Find strength within and live with no regret.",
+                "Be stronger than your strongest excuse, or suffer the consequences.",
+                "Success is the sum of small efforts, repeated day in and day out. Continue towards a life of no regret.",
                 "It won't be like this forever, take advantage of now and do right by yourself.",
                 "Regret born from ill-fated choices will surpasses all other hardships."
             };
