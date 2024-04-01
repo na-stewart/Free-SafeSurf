@@ -8,16 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>svchost</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Title>SSWatchdog</Title>
-    <Company></Company>
-    <Product>SSWatchdog</Product>
-    <Authors></Authors>
     <StartupObject>Watchdog.Program</StartupObject>
     <ApplicationIcon>safe-surf.ico</ApplicationIcon>
-    <Version></Version>
-    <AssemblyVersion>1.1</AssemblyVersion>
-    <FileVersion>1.1</FileVersion>
-    <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>

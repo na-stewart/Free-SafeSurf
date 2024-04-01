@@ -1,4 +1,6 @@
-﻿using System.Xml;
+﻿using System;
+using System.IO;
+using System.Xml;
 
 /*
 MIT License
@@ -24,12 +26,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-namespace Enforcer
+namespace Watchdog
 {
     internal class Config
     {
-        private readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
-        private readonly XmlDocument xml = new XmlDocument();
+        private string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
+        private XmlDocument xml = new XmlDocument();
         private static Config instance = null;
 
         public string ConfigFile

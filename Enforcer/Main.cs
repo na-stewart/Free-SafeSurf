@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Task = System.Threading.Tasks.Task;
+using System.ServiceProcess;
 
 /*
 MIT License
@@ -40,15 +41,18 @@ namespace Enforcer
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly string windowsPath = "C:\\WINDOWS\\System32";
+        readonly ServiceController watchdog = new ServiceController("SSWatchdog");
+        //readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly string exePath = "C:\\Users\\Aidan Stewart\\Source\\Repos\\na-stewart\\FreeSafeSurf\\bin";
         readonly Config config = Config.Instance;
         readonly List<FileStream> filePadlocks = new List<FileStream> ();
         bool isEnforcerActive = true;
-        Process watchdog;
 
         public Main(string[] args)
         {
             InitializeComponent();
+            
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -56,13 +60,11 @@ namespace Enforcer
                 SetCleanBrowsingDNS();
             }
             else
-            {
-                InitializeWatchdog(args);
-                if (config.Read("motivation").Equals("on"))
-                    ShowMotivation();
+            {     
                 SetHosts();
                 AddDefenderExclusion();
-                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");     
+                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
+                InitializeWatchdog(args);
                 InitializeLock();      
             }
             Environment.Exit(0);
@@ -82,7 +84,7 @@ namespace Enforcer
                         filePadlock.Close();
                     using (var taskService = new TaskService()) 
                         taskService.RootFolder.DeleteTask("SafeSurf");
-                    watchdog.Kill();
+                   
                     continue;
                 }
                 else
@@ -116,37 +118,29 @@ namespace Enforcer
         {
             DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            var expirationDate = parsedDateEnforced.AddMinutes(int.Parse(config.Read("days-enforced")));
             return networkTime == null ? false : networkTime >= expirationDate;
         }
 
-        int StartWatchdog()
-        {
-            using (Process executor = new Process())
-            {
-                executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
-                executor.StartInfo.CreateNoWindow = true;
-                executor.StartInfo.RedirectStandardOutput = true;
-                executor.Start();
-                return int.Parse(executor.StandardOutput.ReadLine());
-            }
-        }
+
 
         void InitializeWatchdog(string[] args)
         {
-            watchdog = Process.GetProcessById(args.Length > 0 ? int.Parse(args[0]) : StartWatchdog());
-            Task.Run(() =>
+            try
             {
-                while (isEnforcerActive)
+                watchdog.Start(new string[] { Process.GetCurrentProcess().Id.ToString() });
+            }
+            catch (InvalidOperationException) 
+            {
+                using (Process installer = new Process())
                 {
-                    watchdog.WaitForExit();
-                    watchdog.Close();
-                    if (!isEnforcerActive) 
-                        continue;
-                    watchdog = Process.GetProcessById(StartWatchdog());
+                    installer.StartInfo.FileName = Path.Combine(exePath, "WatchdogService.exe");
+                    installer.StartInfo.Arguments = "-i";
+                    installer.Start();
+                    installer.WaitForExit();
+                    watchdog.Start(new string[]{Process.GetCurrentProcess().Id.ToString()});
                 }
-            });
+            }
         }
 
         void RegisterStartupTask()
@@ -215,17 +209,17 @@ namespace Enforcer
         void SetHosts()
         {
             var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
-            var hosts = "C:\\WINDOWS\\System32\\drivers\\etc\\hosts";
+            var hosts = Path.Combine(windowsPath, "drivers\\etc\\hosts");
             try
             {
                 if (config.Read("hosts-filter").Equals("off"))
                 {
                     if (!isEnforcerActive)
-                        File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", string.Empty);
+                        File.WriteAllText(hosts, string.Empty);
                 }
                 else
                 {
-                    File.WriteAllText("C:\\WINDOWS\\System32\\drivers\\etc\\hosts", File.ReadAllText(filterHosts));
+                    File.WriteAllText(hosts, File.ReadAllText(filterHosts));
                     filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
                 }
             }
@@ -246,23 +240,23 @@ namespace Enforcer
 
         public void ShowMotivation()
         {
-            string[] quotes = new string[] {
+            string[] quotes = new string[] {     
                 "You can either suffer the pain of discipline or live with the pain of regret.",
-                "The clock is ticking. Are you becoming the person you want to be?",
-                "Treat each day as a new life and at once begin to live.",
-                "If you stop bad habits now, suddenly years will pass and your regrets will be far behind you.",
-                "There are no regrets in life, just lessons. You must do right by yourself.",
-                "Ever tried. Ever failed. No matter. Try again. Fail again. Fail better.",
+                "Strive to become who you want to be and don't allow hardship to divert you from this path.",
+                "Treat each day as a new life, and at once begin to live.",
+                "If you stop bad habits now, years will pass and your regrets will soon be far behind you.",
+                "There are no regrets in life, just lessons learned. You must do right by yourself to not repeat mistakes.",
+                "Ever tried, ever failed. No matter. Try again, fail again, fail better!",
                 "The only person you are destined to become is who you decide to be.",
                 "I'm not telling you it is going to be easy. Im telling you it's going to be worth it! Wake up and live!",
                 "Hardships often prepare ordinary people for extraordinary things. Don't let it tear you down.",
                 "Be stronger than your strongest excuse or suffer the consequences.",
-                "Success is the sum of small efforts and sacrifices, repeated day in and day out. That is how you contribute towards a life without regret.",
-                "It won't be like this forever, take advantage of now and do right by yourself.",
+                "Success is the sum of small efforts and sacrifices, repeated day in and day out. That is how you contribute towards a fulfilling life.",
+                "Bad habits are broken effectively when traded for good habits.",
                 "Regret born of ill-fated choices will surpass all other hardships.",
-                "Act as if what you do makes a difference, it does. Consequences can go both ways."
+                "Act as if what you do makes a difference, it does. Decisions result in consequences, both good and bad."
             };
-            new ToastContentBuilder().AddText("SafeSurf").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
+            new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
         protected override void WndProc(ref Message aMessage)

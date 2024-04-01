@@ -28,8 +28,8 @@ namespace UI
 {
     internal class Config
     {
-        private string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
-        private XmlDocument xml = new XmlDocument();
+        private readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
+        private readonly XmlDocument xml = new XmlDocument();
         private static Config instance = null;
 
         public static Config Instance

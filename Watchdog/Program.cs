@@ -30,7 +30,7 @@ namespace Watchdog
 {
     internal static class Program
     {
-        static string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        static string exePath = Config.Instance.Read("path");
 
         static void Main(string[] args)
         {

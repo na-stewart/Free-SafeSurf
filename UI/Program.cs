@@ -29,21 +29,20 @@ namespace UI
 {
     internal class Program
     {
-        static string notification = "";
-        static string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        static int navIndex = 0;
-        static Option[] options = {
+        readonly static string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
+        readonly static Config config = Config.Instance;
+        readonly static Option[] options = {
             new Option("Hosts Filter", ["off", "adult", "gambling", "family"]),
             new Option("CleanBrowsing DNS Filter", ["off", "adult", "family"]),
             new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "180", "365"]),
-            new Option("Motivation", ["off", "on"]),
             new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
-          
-        };
-        static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
-        static Config config = Config.Instance;
 
+        };
+        static string notification = "";
+        static int navIndex = 0;
+     
         static void Main(string[] args)
         {
             Console.Title = "SafeSurf";
@@ -105,7 +104,10 @@ namespace UI
                 if (options[0].ToString() == "off" && options[1].ToString() == "off")
                     config.Write("days-enforced", "0");
                 else
+                {
+                    config.Write("path", exePath);
                     config.Write("date-enforced", DateTime.Now.ToString());
+                }  
                 Process process = new Process();
                 process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.CreateNoWindow = true;
