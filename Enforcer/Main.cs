@@ -49,8 +49,7 @@ namespace Enforcer
         public Main(string[] args)
         {
             InitializeComponent();
-            if (config.Read("motivation").Equals("on"))
-                ShowMotivation();    
+  
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -60,6 +59,8 @@ namespace Enforcer
             else
             {
                 InitializeWatchdog(args);
+                if (config.Read("motivation").Equals("on"))
+                    ShowMotivation();
                 SetHosts();
                 AddDefenderExclusion();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");     
