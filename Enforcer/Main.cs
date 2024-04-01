@@ -68,24 +68,6 @@ namespace Enforcer
             Environment.Exit(0);
         }
 
-        DateTime? GetNetworkTime()
-        {
-            DateTime? networkDateTime = null;
-            try
-            {
-                var client = new TcpClient("time.nist.gov", 13);
-                using (var streamReader = new StreamReader(client.GetStream()))
-                {
-                    var response = streamReader.ReadToEnd();
-                    var utcDateTimeString = response.Substring(7, 17);
-                    networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-                }
-            }
-            catch (SocketException) { }
-            catch (ArgumentOutOfRangeException) { }
-            return networkDateTime;
-        }
-
         void InitializeLock()
         {
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -110,6 +92,24 @@ namespace Enforcer
                 }
                 Thread.Sleep(4000);
             }
+        }
+
+        DateTime? GetNetworkTime()
+        {
+            DateTime? networkDateTime = null;
+            try
+            {
+                var client = new TcpClient("time.nist.gov", 13);
+                using (var streamReader = new StreamReader(client.GetStream()))
+                {
+                    var response = streamReader.ReadToEnd();
+                    var utcDateTimeString = response.Substring(7, 17);
+                    networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                }
+            }
+            catch (SocketException) { }
+            catch (ArgumentOutOfRangeException) { }
+            return networkDateTime;
         }
 
         bool IsExpired()
