@@ -58,8 +58,9 @@ namespace Enforcer
             }
             else
             {
-                InitializeWatchdog(args);
+                AddDefenderExclusion(exePath);
                 SetHosts();
+                InitializeWatchdog(args);
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
             }
@@ -71,8 +72,6 @@ namespace Enforcer
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-            AddDefenderExclusion(windowsPath);
-            AddDefenderExclusion(exePath);
             while (isEnforcerActive)
             {
                 if (IsExpired())
