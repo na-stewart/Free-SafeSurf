@@ -28,9 +28,9 @@ namespace UI
 {
     internal class Config
     {
-        private readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
-        private readonly XmlDocument xml = new XmlDocument();
-        private static Config instance = null;
+        readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
+        readonly XmlDocument xml = new XmlDocument();
+        static Config instance = null;
 
         public static Config Instance
         {
@@ -42,7 +42,7 @@ namespace UI
             }
         }
 
-        private Config()
+        Config()
         {
             if (File.Exists(configFile))
                 xml.Load(configFile);

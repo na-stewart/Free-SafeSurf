@@ -17,6 +17,7 @@
     <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>
     <AssemblyVersion>1.1</AssemblyVersion>
     <FileVersion>1.1</FileVersion>
+	<ProductVersion>1.1</ProductVersion>
     <BaseOutputPath></BaseOutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>SafeSurf</Product>
@@ -29,7 +30,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Toolkit.Uwp.Notifications" Version="7.1.3" />
     <PackageReference Include="System.Management" Version="8.0.0" />
-    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.0" />
     <PackageReference Include="TaskScheduler" Version="2.10.1" />
   </ItemGroup>
 

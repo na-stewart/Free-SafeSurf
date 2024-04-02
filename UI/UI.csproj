@@ -12,6 +12,7 @@
     <Version></Version>
     <AssemblyVersion>1.1</AssemblyVersion>
     <FileVersion>1.1</FileVersion>
+	<ProductVersion>1.1</ProductVersion>
     <Title>$(AssemblyName)</Title>
     <PackageId></PackageId>
     <Authors></Authors>

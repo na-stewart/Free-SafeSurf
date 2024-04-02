@@ -26,11 +26,11 @@ namespace UI
 {
     internal class Option
     {
-        private string selection;
-        private string name;
-        private string[] availableSelections;
-        private int selectionIndex;
-        private Action onSelection;
+        string selection;
+        string name;
+        string[] availableSelections;
+        int selectionIndex;
+        Action onSelection;
 
         public string Name
         {

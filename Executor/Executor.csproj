@@ -16,6 +16,7 @@
     <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>
     <AssemblyVersion>1.0</AssemblyVersion>
     <FileVersion>1.0</FileVersion>
+	<ProductVersion>1.0</ProductVersion>
     <Product>SafeSurf</Product>
   </PropertyGroup>
 

@@ -8,7 +8,6 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Task = System.Threading.Tasks.Task;
-using System.ServiceProcess;
 
 /*
 MIT License
@@ -42,17 +41,15 @@ namespace Enforcer
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string windowsPath = "C:\\WINDOWS\\System32";
-        //readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        readonly string exePath = "C:\\Users\\Aidan Stewart\\Source\\Repos\\na-stewart\\FreeSafeSurf\\bin";
+        readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Config config = Config.Instance;
-        readonly List<FileStream> filePadlocks = new List<FileStream> ();
+        readonly List<FileStream> filePadlocks = new List<FileStream>();
         bool isEnforcerActive = true;
+        Process watchdog;
 
         public Main(string[] args)
         {
             InitializeComponent();
-
-            /*
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -60,15 +57,13 @@ namespace Enforcer
                 SetCleanBrowsingDNS();
             }
             else
-            {     
+            {
+                InitializeWatchdog(args);
                 SetHosts();
                 AddDefenderExclusion();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
-                InitializeWatchdog(args);
-                InitializeLock();      
+                InitializeLock();
             }
-            */
-            InitializeWatchdog(args);
             Environment.Exit(0);
         }
 
@@ -84,15 +79,15 @@ namespace Enforcer
                     isEnforcerActive = false;
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
-                    using (var taskService = new TaskService()) 
+                    using (var taskService = new TaskService())
                         taskService.RootFolder.DeleteTask("SafeSurf");
-                   
+                    watchdog.Kill();
                     continue;
                 }
                 else
-                {  
-                    SetCleanBrowsingDNS();      
-                    RegisterStartupTask();       
+                {
+                    SetCleanBrowsingDNS();
+                    RegisterStartupTask();
                 }
                 Thread.Sleep(4000);
             }
@@ -120,39 +115,53 @@ namespace Enforcer
         {
             DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddMinutes(int.Parse(config.Read("days-enforced")));
-            return networkTime == null ? false : networkTime >= expirationDate;
+            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            return networkTime != null && networkTime >= expirationDate;
         }
-
-
 
         void InitializeWatchdog(string[] args)
         {
-            ServiceController watchdog = new ServiceController("SSWatchdog");
-            try
+            var watchdogFiles = Directory.GetFiles(exePath, "*powershell*");
+            if (args.Length > 0)
             {
-                // Attempt to start the service with the current process ID as an argument
-                watchdog.Start(new string[] { Process.GetCurrentProcess().Id.ToString() });
+                watchdog = Process.GetProcessById(int.Parse(args[0]));
+                ShowMotivation();
             }
-            catch (InvalidOperationException ex)
+            else
             {
-                // Log the exception for diagnostic purposes (Consider implementing logging here)
-
-                using (Process installer = new Process())
+                try
                 {
-                    installer.StartInfo.FileName = Path.Combine(exePath, "WatchdogService.exe");
-                    installer.StartInfo.Arguments = "-i"; // Assuming this installs the service
-                    installer.Start();
-                    installer.WaitForExit();
-
-                    // Introduce a delay to ensure the SCM updates its records to recognize the newly installed service
-                    System.Threading.Thread.Sleep(5000); // Delay for 5 seconds
-
-                    watchdog = new ServiceController("SSWatchdog");
-
-                    // Now attempt to start the service again
-                    watchdog.Start(new string[] { Process.GetCurrentProcess().Id.ToString() });
+                    foreach (string file in watchdogFiles)
+                        File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)));
                 }
+                catch (IOException) { }
+                watchdog = Process.GetProcessById(StartWatchdog());
+            }
+            foreach (string file in watchdogFiles)
+                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            Task.Run(() =>
+            {
+                while (isEnforcerActive)
+                {
+                    watchdog.WaitForExit();
+                    watchdog.Close();
+                    if (!isEnforcerActive)
+                        continue;
+                    watchdog = Process.GetProcessById(StartWatchdog());
+                }
+            });
+        }
+
+        int StartWatchdog()
+        {
+            using (Process executor = new Process())
+            {
+                executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                executor.StartInfo.Arguments = $"\"{Path.Combine(windowsPath, "powershell.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.CreateNoWindow = true;
+                executor.StartInfo.RedirectStandardOutput = true;
+                executor.Start();
+                return int.Parse(executor.StandardOutput.ReadLine());
             }
         }
 
@@ -239,26 +248,13 @@ namespace Enforcer
             catch (IOException) { }
         }
 
-        void AddDefenderExclusion()
+        void ShowMotivation()
         {
-            var powershell = new ProcessStartInfo("powershell")
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
-            };
-            Process.Start(powershell);
-        }
-
-        public void ShowMotivation()
-        {
-            string[] quotes = new string[] {     
+            string[] quotes = new string[] {
                 "You can either suffer the pain of discipline or live with the pain of regret.",
-                "Strive to become who you want to be and don't allow hardship to divert you from this path.",
-                "Treat each day as a new life, and at once begin to live.",
-                "If you stop bad habits now, years will pass and your regrets will soon be far behind you.",
-                "There are no regrets in life, just lessons learned. You must do right by yourself to not repeat mistakes.",
+                "Strive to become who you want to be, don't allow hardship to divert you from this path.",
+                "Treat each day as a new life, and at once begin to live again.",
+                "If you stop bad habits now, years will pass and it will soon be far behind you.",
                 "Ever tried, ever failed. No matter. Try again, fail again, fail better!",
                 "The only person you are destined to become is who you decide to be.",
                 "I'm not telling you it is going to be easy. Im telling you it's going to be worth it! Wake up and live!",
@@ -270,6 +266,18 @@ namespace Enforcer
                 "Act as if what you do makes a difference, it does. Decisions result in consequences, both good and bad."
             };
             new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
+        }
+
+        void AddDefenderExclusion()
+        {
+            var powershell = new ProcessStartInfo("powershell")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                Verb = "runas",
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+            };
+            Process.Start(powershell);
         }
 
         protected override void WndProc(ref Message aMessage)

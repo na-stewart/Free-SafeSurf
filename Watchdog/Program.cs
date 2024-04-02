@@ -1,6 +1,4 @@
-using System;
 using System.Diagnostics;
-using System.Reflection;
 
 /*
 MIT License
@@ -30,7 +28,7 @@ namespace Watchdog
 {
     internal static class Program
     {
-        static string exePath = Config.Instance.Read("path");
+        static readonly string exePath = Config.Instance.Read("path");
 
         static void Main(string[] args)
         {
