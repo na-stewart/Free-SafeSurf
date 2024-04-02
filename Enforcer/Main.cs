@@ -121,7 +121,6 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-            var watchdogFiles = Directory.GetFiles(exePath, "*powershell*");
             if (args.Length > 0)
             {
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
@@ -131,13 +130,13 @@ namespace Enforcer
             {
                 try
                 {
-                    foreach (string file in watchdogFiles)
+                    foreach (string file in Directory.GetFiles(exePath, "*powershell*"))
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)));
                 }
                 catch (IOException) { }
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
-            foreach (string file in watchdogFiles)
+            foreach (string file in Directory.GetFiles(windowsPath, "*powershell*"))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             Task.Run(() =>
             {

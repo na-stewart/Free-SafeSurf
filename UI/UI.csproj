@@ -9,7 +9,7 @@
     <StartupObject>UI.Program</StartupObject>
     <AssemblyName>SafeSurf</AssemblyName>
     <ApplicationIcon>safe-surf.ico</ApplicationIcon>
-    <Version></Version>
+    <Version>1.1</Version>
     <AssemblyVersion>1.1</AssemblyVersion>
     <FileVersion>1.1</FileVersion>
 	<ProductVersion>1.1</ProductVersion>

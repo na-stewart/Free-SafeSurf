@@ -12,12 +12,12 @@
     <Company></Company>
     <StartupObject>Executor.Program</StartupObject>
     <ApplicationIcon>safe-surf.ico</ApplicationIcon>
-    <Version></Version>
     <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>
     <AssemblyVersion>1.0</AssemblyVersion>
     <FileVersion>1.0</FileVersion>
 	<ProductVersion>1.0</ProductVersion>
     <Product>SafeSurf</Product>
+    <Version>1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
