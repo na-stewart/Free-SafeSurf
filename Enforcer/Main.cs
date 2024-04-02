@@ -58,9 +58,9 @@ namespace Enforcer
             }
             else
             {
-                AddDefenderExclusion(exePath);
-                SetHosts();
                 InitializeWatchdog(args);
+                AddDefenderExclusion();
+                SetHosts();       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
             }
@@ -270,14 +270,14 @@ namespace Enforcer
             new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
-        void AddDefenderExclusion(string path)
+        void AddDefenderExclusion()
         {
             var powershell = new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
             };
             Process.Start(powershell);
         }
