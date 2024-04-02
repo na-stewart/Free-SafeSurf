@@ -42,7 +42,6 @@ namespace Enforcer
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string windowsPath = "C:\\WINDOWS\\System32";
-        readonly ServiceController watchdog = new ServiceController("SSWatchdog");
         //readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly string exePath = "C:\\Users\\Aidan Stewart\\Source\\Repos\\na-stewart\\FreeSafeSurf\\bin";
         readonly Config config = Config.Instance;
@@ -52,7 +51,8 @@ namespace Enforcer
         public Main(string[] args)
         {
             InitializeComponent();
-            
+
+            /*
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -67,6 +67,8 @@ namespace Enforcer
                 InitializeWatchdog(args);
                 InitializeLock();      
             }
+            */
+            InitializeWatchdog(args);
             Environment.Exit(0);
         }
 
@@ -126,19 +128,30 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
+            ServiceController watchdog = new ServiceController("SSWatchdog");
             try
             {
+                // Attempt to start the service with the current process ID as an argument
                 watchdog.Start(new string[] { Process.GetCurrentProcess().Id.ToString() });
             }
-            catch (InvalidOperationException) 
+            catch (InvalidOperationException ex)
             {
+                // Log the exception for diagnostic purposes (Consider implementing logging here)
+
                 using (Process installer = new Process())
                 {
                     installer.StartInfo.FileName = Path.Combine(exePath, "WatchdogService.exe");
-                    installer.StartInfo.Arguments = "-i";
+                    installer.StartInfo.Arguments = "-i"; // Assuming this installs the service
                     installer.Start();
                     installer.WaitForExit();
-                    watchdog.Start(new string[]{Process.GetCurrentProcess().Id.ToString()});
+
+                    // Introduce a delay to ensure the SCM updates its records to recognize the newly installed service
+                    System.Threading.Thread.Sleep(5000); // Delay for 5 seconds
+
+                    watchdog = new ServiceController("SSWatchdog");
+
+                    // Now attempt to start the service again
+                    watchdog.Start(new string[] { Process.GetCurrentProcess().Id.ToString() });
                 }
             }
         }

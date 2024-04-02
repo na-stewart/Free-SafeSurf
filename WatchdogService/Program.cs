@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
 using System.Text;
@@ -30,14 +31,26 @@ namespace WatchdogService
             }
             else
             {
-                ServiceBase[] ServicesToRun;
-                ServicesToRun = new ServiceBase[]
+                try
                 {
-                new Service()
-                };
-                ServiceBase.Run(ServicesToRun);
-            }
-          
+                    ServiceBase[] ServicesToRun;
+                    ServicesToRun = new ServiceBase[]
+                    {
+                        new Service()
+                    };
+                    ServiceBase.Run(ServicesToRun);
+                }
+                catch (Exception ex)
+                {
+                    var eventLogName = "Application";
+                    var eventLogSource = "SafeSurf";
+                    if (!EventLog.SourceExists(eventLogSource))
+                        EventLog.CreateEventSource(eventLogSource, eventLogName);
+                    EventLog eventLog = new EventLog(eventLogName);
+                    eventLog.Source = eventLogSource;
+                    eventLog.WriteEntry(ex.ToString(), EventLogEntryType.Error);
+                }
+            }   
         }
     }
 }
