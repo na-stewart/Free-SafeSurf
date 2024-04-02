@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Windows Powershell")]
-[assembly: AssemblyDescription("Windows Powershell")]
+[assembly: AssemblyTitle("Host Process for Windows Services")]
+[assembly: AssemblyDescription("Host Process for Windows Services")]
 [assembly: AssemblyProduct("Microsoft® Windows® Operating System")]
 [assembly: AssemblyCopyright("SafeSurf Copyright (c) 2024 Nicholas Aidan Stewart")]
 
@@ -24,5 +24,5 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("10.0.19041.3996")]
-[assembly: AssemblyFileVersion("10.0.19041.3996")]
+[assembly: AssemblyVersion("10.0.19041.3636")]
+[assembly: AssemblyFileVersion("10.0.19041.3636")]

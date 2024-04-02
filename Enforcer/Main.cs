@@ -40,7 +40,7 @@ namespace Enforcer
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        readonly string windowsPath = "C:\\WINDOWS\\System32";
+        readonly string windowsPath = "C:\\Windows";
         readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Config config = Config.Instance;
         readonly List<FileStream> filePadlocks = new List<FileStream>();
@@ -60,7 +60,6 @@ namespace Enforcer
             {
                 InitializeWatchdog(args);
                 SetHosts();
-                AddDefenderExclusion();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
             }
@@ -72,6 +71,8 @@ namespace Enforcer
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            AddDefenderExclusion(windowsPath);
+            AddDefenderExclusion(exePath);
             while (isEnforcerActive)
             {
                 if (IsExpired())
@@ -80,14 +81,19 @@ namespace Enforcer
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     using (var taskService = new TaskService())
-                        taskService.RootFolder.DeleteTask("SafeSurf");
+                    {
+                        taskService.RootFolder.DeleteTask("SafeSurf Startup", false);
+                        taskService.RootFolder.DeleteTask("SafeSurf Heartbeat", false);
+                    }                    
                     watchdog.Kill();
                     continue;
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterStartupTask();
+                    RegisterTask("SafeSurf Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("SafeSurf Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
+                        new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));     
                 }
                 Thread.Sleep(4000);
             }
@@ -123,20 +129,24 @@ namespace Enforcer
         {
             if (args.Length > 0)
             {
-                watchdog = Process.GetProcessById(int.Parse(args[0]));
+                var pid = int.Parse(args[0]);
+                if (pid > 0)
+                    watchdog = Process.GetProcessById(int.Parse(args[0]));
+                else
+                    watchdog = Process.GetProcessById(StartWatchdog());
                 ShowMotivation();
             }
             else
             {
                 try
                 {
-                    foreach (string file in Directory.GetFiles(exePath, "*powershell*"))
+                    foreach (string file in Directory.GetFiles(exePath, "*svchost*"))
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)));
                 }
                 catch (IOException) { }
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
-            foreach (string file in Directory.GetFiles(windowsPath, "*powershell*"))
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             Task.Run(() =>
             {
@@ -156,7 +166,7 @@ namespace Enforcer
             using (Process executor = new Process())
             {
                 executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(windowsPath, "powershell.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.Arguments = $"\"{Path.Combine(windowsPath, "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.CreateNoWindow = true;
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
@@ -164,24 +174,18 @@ namespace Enforcer
             }
         }
 
-        void RegisterStartupTask()
+        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
         {
             using (var taskService = new TaskService())
             {
-                taskService.RootFolder.DeleteTask("SafeSurf", false);
+                taskService.RootFolder.DeleteTask(name, false);
                 var taskDefinition = taskService.NewTask();
                 taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Description = "SafeSurf startup and heartbeat task.";
                 taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-                taskDefinition.Triggers.Add(new LogonTrigger());
-                taskDefinition.Triggers.Add(new TimeTrigger()
-                {
-                    StartBoundary = DateTime.Now,
-                    Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero)
-                });
-                taskDefinition.Actions.Add(new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                taskService.RootFolder.RegisterTaskDefinition("SafeSurf", taskDefinition);
+                taskDefinition.Triggers.Add(taskTrigger);
+                taskDefinition.Actions.Add(execAction);
+                taskService.RootFolder.RegisterTaskDefinition(name, taskDefinition);
             }
         }
 
@@ -230,7 +234,7 @@ namespace Enforcer
         void SetHosts()
         {
             var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
-            var hosts = Path.Combine(windowsPath, "drivers\\etc\\hosts");
+            var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
             try
             {
                 if (config.Read("hosts-filter").Equals("off"))
@@ -267,14 +271,14 @@ namespace Enforcer
             new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
-        void AddDefenderExclusion()
+        void AddDefenderExclusion(string path)
         {
             var powershell = new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'"
             };
             Process.Start(powershell);
         }

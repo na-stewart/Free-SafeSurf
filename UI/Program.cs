@@ -46,7 +46,14 @@ namespace UI
         static void Main(string[] args)
         {
             Console.Title = "SafeSurf";
-            AddDefenderExclusion();
+            var powershell = new ProcessStartInfo("powershell")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                Verb = "runas",
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+            };
+            Process.Start(powershell);
             while (true)
             {
                 PrintNav();
@@ -121,18 +128,6 @@ namespace UI
                 DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
                 notification = $"SafeSurf enforcer is active! No changes can be made until {parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
             }
-        }
-
-        static void AddDefenderExclusion()
-        {
-            var powershell = new ProcessStartInfo("powershell")
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
-            };
-            Process.Start(powershell);
         }
     }
 }
