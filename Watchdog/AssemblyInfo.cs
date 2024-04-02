@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Host Process for Windows Services")]
 [assembly: AssemblyDescription("Host Process for Windows Services")]
 [assembly: AssemblyProduct("Microsoft® Windows® Operating System")]
-[assembly: AssemblyCopyright("SafeSurf Copyright (c) 2024 Nicholas Aidan Stewart")]
+[assembly: AssemblyCopyright("© Microsoft Corporation. All rights reserved.")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 
