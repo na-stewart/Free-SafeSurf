@@ -91,7 +91,7 @@ Functionality including setting DNS, manipulating the hosts file, and some circu
 
 ### Help!
 
-If you experience any problems utilizing SafeSurf, submit an issue on this repository or [contact me](https://blog.na-stewart.com/contact).
+If you experience any problems utilizing SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) on this repository or [contact me](https://blog.na-stewart.com/contact).
 
 <!-- CONTRIBUTING -->
 ## Contributing
