@@ -58,7 +58,7 @@ namespace Enforcer
             }
             else if (!IsExpired())
             {
-                //InitializeWatchdog(args);
+                InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
@@ -100,7 +100,7 @@ namespace Enforcer
         {
             DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
+            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
             return networkTime != null && networkTime >= expirationDate;
         }
 
