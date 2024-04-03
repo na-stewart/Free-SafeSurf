@@ -90,14 +90,11 @@ namespace Enforcer
                 else
                 {
                     SetCleanBrowsingDNS();
-                    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
-                    {
-                        if (key != null)
-                            key.SetValue("SafeSurf", Path.Combine(exePath, "SSDaemon.exe"));
-                    }
                     RegisterTask("Service Host Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
                     RegisterTask("Service Host Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
-                        new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));     
+                        new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
+                    using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                        key.SetValue("SafeSurf", Path.Combine(exePath, "SSDaemon.exe"));
                 }
                 Thread.Sleep(4000);
             }
@@ -125,7 +122,7 @@ namespace Enforcer
         {
             DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
             return networkTime != null && networkTime >= expirationDate;
         }
 
