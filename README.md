@@ -59,7 +59,9 @@ SafeSurf is privacy friendly as absolutely no data is collected and it is comple
 <!-- GETTING STARTED -->
 ## Configuration
 
-SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf.exe`
+SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf.exe`. 
+
+This program will ***only*** be available for download on this repository. Any other instances found elsewhere may be malicious.
 
 <ins>Before activation, make sure you understand what each setting does.</ins>
 
@@ -86,6 +88,10 @@ In the instance that CleanBrowsing causes connectivity issues, it is recommended
 
 ### Why does SafeSurf ask for administrator priviliges?
 Functionality including setting DNS, manipulating the hosts file, and some circumvention measures require elevation to function.
+
+### Help!
+
+If you experience any problems utilizing SafeSurf, submit an issue on this repository or [contact me](https://blog.na-stewart.com/contact).
 
 <!-- CONTRIBUTING -->
 ## Contributing
