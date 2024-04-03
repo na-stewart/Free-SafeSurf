@@ -58,7 +58,7 @@ namespace Enforcer
             }
             else if (!IsExpired())
             {
-                InitializeWatchdog(args);
+                //InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
@@ -80,38 +80,20 @@ namespace Enforcer
                         filePadlock.Close();
                     using (var taskService = new TaskService())
                     {
-                        taskService.RootFolder.DeleteTask("Service Host Startup", false);
-                        taskService.RootFolder.DeleteTask("Service Host Heartbeat", false);
+                        taskService.RootFolder.DeleteTask("SvcStartupTask", false);
+                        taskService.RootFolder.DeleteTask("SvcMonitorTask", false);
                     }
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("Service Host Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    RegisterTask("Service Host Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
+                    RegisterTask("SvcStartupTask", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("SvcMonitorTask", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
                     Thread.Sleep(4000);
                 }        
             }
-        }
-
-        DateTime? GetNetworkTime()
-        {
-            DateTime? networkDateTime = null;
-            try
-            {
-                var client = new TcpClient("time.nist.gov", 13);
-                using (var streamReader = new StreamReader(client.GetStream()))
-                {
-                    var response = streamReader.ReadToEnd();
-                    var utcDateTimeString = response.Substring(7, 17);
-                    networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-                }
-            }
-            catch (SocketException) { }
-            catch (ArgumentOutOfRangeException) { }
-            return networkDateTime;
         }
 
         bool IsExpired()
@@ -186,7 +168,7 @@ namespace Enforcer
                 taskDefinition.Principal.LogonType = TaskLogonType.S4U;
                 taskDefinition.Triggers.Add(taskTrigger);
                 taskDefinition.Actions.Add(execAction);
-                taskService.RootFolder.RegisterTaskDefinition(name, taskDefinition);
+                taskService.GetFolder("\\Microsoft\\Windows\\Maintenance").RegisterTaskDefinition(name, taskDefinition);
             }
         }
 
@@ -250,6 +232,24 @@ namespace Enforcer
                 }
             }
             catch (IOException) { }
+        }
+
+        DateTime? GetNetworkTime()
+        {
+            DateTime? networkDateTime = null;
+            try
+            {
+                var client = new TcpClient("time.nist.gov", 13);
+                using (var streamReader = new StreamReader(client.GetStream()))
+                {
+                    var response = streamReader.ReadToEnd();
+                    var utcDateTimeString = response.Substring(7, 17);
+                    networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                }
+            }
+            catch (SocketException) { }
+            catch (ArgumentOutOfRangeException) { }
+            return networkDateTime;
         }
 
         void ShowMotivation()
