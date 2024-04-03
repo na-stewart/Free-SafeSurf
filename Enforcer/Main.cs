@@ -1,4 +1,5 @@
 using Microsoft.Toolkit.Uwp.Notifications;
+using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Globalization;
@@ -89,6 +90,11 @@ namespace Enforcer
                 else
                 {
                     SetCleanBrowsingDNS();
+                    using (RegistryKey? key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+                    {
+                        if (key != null)
+                            key.SetValue("SafeSurf", Path.Combine(exePath, "SSDaemon.exe"));
+                    }
                     RegisterTask("Service Host Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
                     RegisterTask("Service Host Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));     
