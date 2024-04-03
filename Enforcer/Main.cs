@@ -49,7 +49,7 @@ namespace Enforcer
 
         public Main(string[] args)
         {
-            InitializeComponent();
+            InitializeComponent();      
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -58,7 +58,6 @@ namespace Enforcer
             }
             else
             {
-                AddDefenderExclusion(exePath);
                 InitializeWatchdog(args);
                 SetHosts();       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
@@ -126,6 +125,7 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
+            AddDefenderExclusion(exePath);
             if (args.Length > 0)
             {
                 var pid = int.Parse(args[0]);
