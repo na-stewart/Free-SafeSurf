@@ -1,5 +1,4 @@
 using Microsoft.Toolkit.Uwp.Notifications;
-using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Globalization;
@@ -50,17 +49,17 @@ namespace Enforcer
 
         public Main(string[] args)
         {
-            InitializeComponent();      
+            InitializeComponent();
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
                 SetHosts();
                 SetCleanBrowsingDNS();
             }
-            else
+            else if (!IsExpired())
             {
                 InitializeWatchdog(args);
-                SetHosts();       
+                SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeLock();
             }
@@ -83,20 +82,17 @@ namespace Enforcer
                     {
                         taskService.RootFolder.DeleteTask("Service Host Startup", false);
                         taskService.RootFolder.DeleteTask("Service Host Heartbeat", false);
-                    }                    
+                    }
                     watchdog.Kill();
-                    continue;
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
                     RegisterTask("Service Host Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    RegisterTask("Service Host Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
+                    RegisterTask("Service Host Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
-                    using (RegistryKey key = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
-                        key.SetValue("SafeSurf", Path.Combine(exePath, "SSDaemon.exe"));
-                }
-                Thread.Sleep(4000);
+                    Thread.Sleep(4000);
+                }        
             }
         }
 
@@ -122,13 +118,14 @@ namespace Enforcer
         {
             DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
             return networkTime != null && networkTime >= expirationDate;
         }
 
         void InitializeWatchdog(string[] args)
         {
             AddDefenderExclusion(exePath);
+            AddDefenderExclusion(Path.Combine(windowsPath, "svchost.exe"));
             if (args.Length > 0)
             {
                 var pid = int.Parse(args[0]);
@@ -148,12 +145,8 @@ namespace Enforcer
                 catch (IOException) { }
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
-            {
-                if (Path.GetExtension(file).Equals(".exe"))
-                    AddDefenderExclusion(file);
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-            }
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))          
+                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));  
             Task.Run(() =>
             {
                 while (isEnforcerActive)
@@ -190,6 +183,7 @@ namespace Enforcer
                 taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
                 taskDefinition.RegistrationInfo.Description = "Ensures critical Windows service processes are running.";
                 taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+                taskDefinition.Principal.LogonType = TaskLogonType.S4U;
                 taskDefinition.Triggers.Add(taskTrigger);
                 taskDefinition.Actions.Add(execAction);
                 taskService.RootFolder.RegisterTaskDefinition(name, taskDefinition);
