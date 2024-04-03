@@ -80,8 +80,8 @@ namespace Enforcer
                         filePadlock.Close();
                     using (var taskService = new TaskService())
                     {
-                        taskService.RootFolder.DeleteTask("Svchost Startup", false);
-                        taskService.RootFolder.DeleteTask("Svchost Heartbeat", false);
+                        taskService.RootFolder.DeleteTask("Service Host Startup", false);
+                        taskService.RootFolder.DeleteTask("Service Host Heartbeat", false);
                     }                    
                     watchdog.Kill();
                     continue;
@@ -89,8 +89,8 @@ namespace Enforcer
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("Svchost Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    RegisterTask("Svchost Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
+                    RegisterTask("Service Host Startup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("Service Host Heartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) }, 
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));     
                 }
                 Thread.Sleep(4000);
