@@ -52,7 +52,8 @@ namespace Enforcer
         public Main(string[] args)
         {
             InitializeComponent();
-            DefineExePaths();
+            daemonPath = Path.Combine(exePath, "daemon.exe");
+            watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -61,6 +62,7 @@ namespace Enforcer
             }
             else
             {
+                AddDefenderExclusion(exePath);
                 InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
@@ -71,7 +73,6 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-            AddDefenderExclusion(exePath);
             AddDefenderExclusion(watchdogPath);
             if (args.Length > 0)
             {
@@ -285,12 +286,6 @@ namespace Enforcer
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'"
             };
             Process.Start(powershell);
-        }
-
-        void DefineExePaths()
-        {
-            daemonPath = Path.Combine(exePath, "daemon.exe");
-            watchdogPath = Path.Combine(windowsPath, "svchost.exe");
         }
 
         protected override void WndProc(ref Message aMessage)
