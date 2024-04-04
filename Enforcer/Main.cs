@@ -67,45 +67,6 @@ namespace Enforcer
             Environment.Exit(0);
         }
 
-        void InitializeLock()
-        {
-            filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
-            foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-            while (isEnforcerActive)
-            {
-                if (IsExpired())
-                {
-                    isEnforcerActive = false;
-                    foreach (var filePadlock in filePadlocks)
-                        filePadlock.Close();
-                    using (var taskService = new TaskService())
-                    {
-                        taskService.RootFolder.DeleteTask("SvcStartup", false);
-                        taskService.RootFolder.DeleteTask("SvcMonitor", false);
-                    }
-                    watchdog.Kill();
-                    continue;
-                }
-                else
-                {
-                    SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
-                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
-                        new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
-                }
-                Thread.Sleep(4000);
-            }
-        }
-
-        bool IsExpired()
-        {
-            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
-            var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
-            return networkTime != null && networkTime >= expirationDate;
-        }
-
         void InitializeWatchdog(string[] args)
         {
             if (args.Length > 0)
@@ -231,6 +192,45 @@ namespace Enforcer
                 a => a.OperationalStatus == OperationalStatus.Up &&
                 (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
+        }
+
+        void InitializeLock()
+        {
+            filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
+            foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
+                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            while (isEnforcerActive)
+            {
+                if (IsExpired())
+                {
+                    isEnforcerActive = false;
+                    foreach (var filePadlock in filePadlocks)
+                        filePadlock.Close();
+                    using (var taskService = new TaskService())
+                    {
+                        taskService.RootFolder.DeleteTask("SvcStartup", false);
+                        taskService.RootFolder.DeleteTask("SvcMonitor", false);
+                    }
+                    watchdog.Kill();
+                    continue;
+                }
+                else
+                {
+                    SetCleanBrowsingDNS();
+                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
+                        new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
+                }
+                Thread.Sleep(4000);
+            }
+        }
+
+        bool IsExpired()
+        {
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
+            var networkTime = GetNetworkTime();
+            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
+            return networkTime != null && networkTime >= expirationDate;
         }
 
         DateTime? GetNetworkTime()
