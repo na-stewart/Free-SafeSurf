@@ -56,8 +56,9 @@ namespace Enforcer
                 SetHosts();
                 SetCleanBrowsingDNS();
             }
-            else if (!IsExpired())
+            else
             {
+                AddDefenderExclusion();
                 InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
@@ -84,6 +85,7 @@ namespace Enforcer
                         taskService.RootFolder.DeleteTask("SvcMonitor", false);
                     }
                     watchdog.Kill();
+                    continue;
                 }
                 else
                 {
@@ -91,8 +93,8 @@ namespace Enforcer
                     RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
                     RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
                         new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
-                    Thread.Sleep(4000);
                 }
+                Thread.Sleep(4000);
             }
         }
 
@@ -100,14 +102,12 @@ namespace Enforcer
         {
             DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
             var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
             return networkTime != null && networkTime >= expirationDate;
         }
 
         void InitializeWatchdog(string[] args)
         {
-            AddDefenderExclusion(exePath);
-            AddDefenderExclusion(Path.Combine(windowsPath, "svchost.exe"));
             if (args.Length > 0)
             {
                 var pid = int.Parse(args[0]);
@@ -127,8 +127,6 @@ namespace Enforcer
                 catch (IOException) { }
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             Task.Run(() =>
             {
                 while (isEnforcerActive)
@@ -140,6 +138,8 @@ namespace Enforcer
                     watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
+                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
         int StartWatchdog()
@@ -155,6 +155,42 @@ namespace Enforcer
             }
         }
 
+        void SetHosts()
+        {
+            var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
+            var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
+            try
+            {
+                if (config.Read("hosts-filter").Equals("off"))
+                {
+                    if (!isEnforcerActive)
+                        File.WriteAllText(hosts, string.Empty);
+                }
+                else
+                {
+                    File.WriteAllText(hosts, File.ReadAllText(filterHosts));
+                    filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
+                }
+            }
+            catch (IOException) { }
+        }
+
+        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
+        {
+            using (var taskService = new TaskService())
+            {
+                taskService.RootFolder.DeleteTask(name, false);
+                var taskDefinition = taskService.NewTask();
+                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
+                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
+                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+                taskDefinition.Triggers.Add(taskTrigger);
+                taskDefinition.Actions.Add(execAction);
+                (taskService.GetFolder("\\Microsoft\\Windows\\Maintenance") ?? taskService.RootFolder).RegisterTaskDefinition(name, taskDefinition);
+            }
+        }
+       
         void SetCleanBrowsingDNS()
         {
             try
@@ -189,49 +225,12 @@ namespace Enforcer
             catch (FileLoadException) { }
         }
 
-        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
-        {
-            using (var taskService = new TaskService())
-            {
-                taskService.RootFolder.DeleteTask(name, false);
-                var taskDefinition = taskService.NewTask();
-                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
-                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
-                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-                taskDefinition.Principal.LogonType = TaskLogonType.S4U;
-                taskDefinition.Triggers.Add(taskTrigger);
-                taskDefinition.Actions.Add(execAction);
-                taskService.GetFolder("\\Microsoft\\Windows\\Maintenance").RegisterTaskDefinition(name, taskDefinition);
-            }
-        }
-
         NetworkInterface? GetActiveEthernetOrWifiNetworkInterface()
         {
             return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
                 a => a.OperationalStatus == OperationalStatus.Up &&
                 (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
-        }
-
-        void SetHosts()
-        {
-            var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
-            var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
-            try
-            {
-                if (config.Read("hosts-filter").Equals("off"))
-                {
-                    if (!isEnforcerActive)
-                        File.WriteAllText(hosts, string.Empty);
-                }
-                else
-                {
-                    File.WriteAllText(hosts, File.ReadAllText(filterHosts));
-                    filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
-                }
-            }
-            catch (IOException) { }
         }
 
         DateTime? GetNetworkTime()
@@ -272,14 +271,14 @@ namespace Enforcer
             new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
-        void AddDefenderExclusion(string path)
+        void AddDefenderExclusion()
         {
             var powershell = new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
             };
             Process.Start(powershell);
         }
