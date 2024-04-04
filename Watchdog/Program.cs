@@ -56,7 +56,8 @@ namespace Watchdog
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.StartInfo.CreateNoWindow = true;
                 executor.Start();
-                return int.Parse(executor.StandardOutput.ReadLine());
+                var executorResponse = executor.StandardOutput.ReadLine();
+                return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
             }
         }
     }

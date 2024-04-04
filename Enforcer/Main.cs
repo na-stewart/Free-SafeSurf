@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Task = System.Threading.Tasks.Task;
 
@@ -40,19 +39,17 @@ namespace Enforcer
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        readonly string windowsPath = "C:\\Windows";
-        readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly string daemonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSDaemon.exe");
+        readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        readonly List<FileStream> filePadlocks = new();
         readonly Config config = Config.Instance;
-        readonly List<FileStream> filePadlocks = new List<FileStream>();
-        string daemonPath;
-        string watchdogPath;
+        readonly string watchdogPath;
         bool isEnforcerActive = true;
         Process watchdog;
 
         public Main(string[] args)
         {
             InitializeComponent();
-            daemonPath = Path.Combine(exePath, "daemon.exe");
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
@@ -62,7 +59,7 @@ namespace Enforcer
             }
             else
             {
-                AddDefenderExclusion(exePath);
+                AddDefenderExclusion(AppDomain.CurrentDomain.BaseDirectory);
                 InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
@@ -79,20 +76,18 @@ namespace Enforcer
                 var pid = int.Parse(args[0]);
                 if (pid > 0)
                     watchdog = Process.GetProcessById(int.Parse(args[0]));
-                else
-                    watchdog = Process.GetProcessById(StartWatchdog());
                 ShowMotivation();
             }
             else
             {
                 try
                 {
-                    foreach (string file in Directory.GetFiles(exePath, "*svchost*"))
+                    foreach (string file in Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*svchost*"))
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)));
                 }
                 catch (IOException) { }
-                watchdog = Process.GetProcessById(StartWatchdog());
             }
+            watchdog ??= Process.GetProcessById(StartWatchdog());
             Task.Run(() =>
             {
                 while (isEnforcerActive)
@@ -110,20 +105,21 @@ namespace Enforcer
 
         int StartWatchdog()
         {
-            using (Process executor = new Process())
+            using (Process executor = new())
             {
-                executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                executor.StartInfo.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSExecutor.exe");
                 executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.CreateNoWindow = true;
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
-                return int.Parse(executor.StandardOutput.ReadLine());
+                var executorResponse = executor.StandardOutput.ReadLine();
+                return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
             }
         }
 
         void SetHosts()
         {
-            var filterHosts = Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts");
+            var filterHosts = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{config.Read("hosts-filter")}.hosts");
             var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
             try
             {
@@ -141,22 +137,44 @@ namespace Enforcer
             catch (IOException) { }
         }
 
-        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
+        void InitializeLock()
         {
-            using (var taskService = new TaskService())
+            filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
+            foreach (var file in Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*", SearchOption.AllDirectories))
+                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            while (isEnforcerActive)
             {
-                taskService.RootFolder.DeleteTask(name, false);
-                var taskDefinition = taskService.NewTask();
-                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
-                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
-                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-                taskDefinition.Triggers.Add(taskTrigger);
-                taskDefinition.Actions.Add(execAction);
-                (taskService.GetFolder("\\Microsoft\\Windows\\Maintenance") ?? taskService.RootFolder).RegisterTaskDefinition(name, taskDefinition);
+                if (IsExpired())
+                {
+                    isEnforcerActive = false;
+                    foreach (var filePadlock in filePadlocks)
+                        filePadlock.Close();
+                    using (var taskService = new TaskService())
+                    {
+                        taskService.RootFolder.DeleteTask("SvcStartup", false);
+                        taskService.RootFolder.DeleteTask("SvcMonitor", false);
+                    }
+                    watchdog.Kill();
+                }
+                else
+                {
+                    SetCleanBrowsingDNS();
+                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(daemonPath));
+                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
+                        new ExecAction(daemonPath, "0"));
+                    Thread.Sleep(4000);
+                }        
             }
         }
-       
+
+        bool IsExpired()
+        {
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
+            var networkTime = GetNetworkTime();
+            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
+            return networkTime != null && networkTime >= expirationDate;
+        }
+
         void SetCleanBrowsingDNS()
         {
             try
@@ -199,43 +217,20 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void InitializeLock()
+        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
         {
-            filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
-            foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
-            while (isEnforcerActive)
+            using (var taskService = new TaskService())
             {
-                if (IsExpired())
-                {
-                    isEnforcerActive = false;
-                    foreach (var filePadlock in filePadlocks)
-                        filePadlock.Close();
-                    using (var taskService = new TaskService())
-                    {
-                        taskService.RootFolder.DeleteTask("SvcStartup", false);
-                        taskService.RootFolder.DeleteTask("SvcMonitor", false);
-                    }
-                    watchdog.Kill();
-                    continue;
-                }
-                else
-                {
-                    SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(daemonPath));
-                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
-                        new ExecAction(daemonPath, "0"));
-                }
-                Thread.Sleep(4000);
+                taskService.RootFolder.DeleteTask(name, false);
+                var taskDefinition = taskService.NewTask();
+                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
+                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
+                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+                taskDefinition.Triggers.Add(taskTrigger);
+                taskDefinition.Actions.Add(execAction);
+                (taskService.GetFolder("\\Microsoft\\Windows\\Maintenance") ?? taskService.RootFolder).RegisterTaskDefinition(name, taskDefinition);
             }
-        }
-
-        bool IsExpired()
-        {
-            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
-            var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
-            return networkTime != null && networkTime >= expirationDate;
         }
 
         DateTime? GetNetworkTime()
@@ -256,26 +251,6 @@ namespace Enforcer
             return networkDateTime;
         }
 
-        void ShowMotivation()
-        {
-            string[] quotes = new string[] {
-                "You can either suffer the pain of discipline or live with the pain of regret.",
-                "Strive to become who you want to be, don't allow hardship to divert you from this path.",
-                "Treat each day as a new life, and at once begin to live again.",
-                "If you stop bad habits now, years will pass and it will soon be far behind you.",
-                "Ever tried, ever failed. No matter. Try again, fail again, fail better!",
-                "The only person you are destined to become is who you decide to be.",
-                "I'm not telling you it is going to be easy. I'm telling you it's going to be worth it! Wake up and live!",
-                "Hardships often prepare ordinary people for extraordinary things. Don't let it tear you down.",
-                "Be stronger than your strongest excuse or suffer the consequences.",
-                "Success is the sum of small efforts and sacrifices, repeated day in and day out. That is how you contribute towards a fulfilling life.",
-                "Bad habits are broken effectively when traded for good habits.",
-                "Regret born of ill-fated choices will surpass all other hardships.",
-                "Act as if what you do makes a difference, it does. Decisions result in consequences, both good and bad."
-            };
-            new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
-        }
-
         void AddDefenderExclusion(string path)
         {
             var powershell = new ProcessStartInfo("powershell")
@@ -286,6 +261,26 @@ namespace Enforcer
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'"
             };
             Process.Start(powershell);
+        }
+
+        void ShowMotivation()
+        {
+            string[] quotes = new string[] {
+                "You can either suffer the pain of discipline or live with the pain of regret.",
+                "Strive to become who you want to be, don't allow hardship to divert you from this path.",
+                "Treat each day as a new life, and at once begin to live again.",
+                "If you stop bad habits now, years will pass and it will soon be far behind you.",
+                "Ever tried, ever failed. No matter. Try again, fail again, fail better!",
+                "The only person you are destined to become is who you decide to be.",
+                "I'm not telling you it is going to be easy, i'm telling you it's going to be worth it!",
+                "Hardships often prepare ordinary people for extraordinary things. Don't let it tear you down.",
+                "Be stronger than your strongest excuse or suffer the consequences.",
+                "Success is the sum of small efforts and sacrifices, repeated day in and day out.",
+                "Bad habits are broken effectively when traded for good habits.",
+                "Regret born of ill-fated choices will surpass all other hardships.",
+                "Act as if what you do makes a difference, it does. Decisions result in consequences, both good and bad."
+            };
+            new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(quotes.Length)]).Show();
         }
 
         protected override void WndProc(ref Message aMessage)

@@ -40,21 +40,14 @@ namespace Enforcer
                         Application.Run(new Main(args));
                     } catch (Exception ex)
                     {
-                        LogException(ex); 
+                        using (EventLog eventLog = new EventLog("Application"))
+                        {
+                            eventLog.Source = "Application";
+                            eventLog.WriteEntry(ex.ToString(), EventLogEntryType.Error, 101, 1);
+                        }
                     }
                 }              
             }
         }
-
-        static void LogException(Exception ex)
-        {
-            var eventLogName = "Application";
-            var eventLogSource = "SafeSurf";
-            if (!EventLog.SourceExists(eventLogSource))
-                EventLog.CreateEventSource(eventLogSource, eventLogName);
-            EventLog eventLog = new EventLog(eventLogName);
-            eventLog.Source = eventLogSource;
-            eventLog.WriteEntry(ex.ToString(), EventLogEntryType.Error);
-        }   
     }
 }
