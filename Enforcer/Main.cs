@@ -44,12 +44,15 @@ namespace Enforcer
         readonly string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Config config = Config.Instance;
         readonly List<FileStream> filePadlocks = new List<FileStream>();
+        string daemonPath;
+        string watchdogPath;
         bool isEnforcerActive = true;
         Process watchdog;
 
         public Main(string[] args)
         {
             InitializeComponent();
+            DefineExePaths();
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -58,7 +61,6 @@ namespace Enforcer
             }
             else
             {
-                AddDefenderExclusion();
                 InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
@@ -69,6 +71,8 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
+            AddDefenderExclusion(exePath);
+            AddDefenderExclusion(watchdogPath);
             if (args.Length > 0)
             {
                 var pid = int.Parse(args[0]);
@@ -108,7 +112,7 @@ namespace Enforcer
             using (Process executor = new Process())
             {
                 executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(windowsPath, "svchost.exe")}\" {Process.GetCurrentProcess().Id}";
+                executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Process.GetCurrentProcess().Id}";
                 executor.StartInfo.CreateNoWindow = true;
                 executor.StartInfo.RedirectStandardOutput = true;
                 executor.Start();
@@ -217,9 +221,9 @@ namespace Enforcer
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(Path.Combine(exePath, "SSDaemon.exe")));
+                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(daemonPath));
                     RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
-                        new ExecAction(Path.Combine(exePath, "SSDaemon.exe"), "0"));
+                        new ExecAction(daemonPath, "0"));
                 }
                 Thread.Sleep(4000);
             }
@@ -271,16 +275,22 @@ namespace Enforcer
             new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(0, quotes.Count())]).Show();
         }
 
-        void AddDefenderExclusion()
+        void AddDefenderExclusion(string path)
         {
             var powershell = new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'"
             };
             Process.Start(powershell);
+        }
+
+        void DefineExePaths()
+        {
+            daemonPath = Path.Combine(exePath, "daemon.exe");
+            watchdogPath = Path.Combine(windowsPath, "svchost.exe");
         }
 
         protected override void WndProc(ref Message aMessage)
