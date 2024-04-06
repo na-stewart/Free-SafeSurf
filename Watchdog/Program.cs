@@ -28,37 +28,33 @@ namespace Watchdog
 {
     internal static class Program
     {
-        static readonly string exePath = Config.Instance.Read("path");
+        static readonly string exePath = Config.Instance.ReadExePath();
 
         static void Main(string[] args)
         {
-            using (var mutex = new Mutex(false, "SSWatchdog"))
+            using var mutex = new Mutex(false, "SSWatchdog");
+            if (mutex.WaitOne(TimeSpan.Zero))
             {
-                if (mutex.WaitOne(TimeSpan.Zero))
+                Process enforcer = Process.GetProcessById(int.Parse(args[0]));
+                while (true)
                 {
-                    Process enforcer = Process.GetProcessById(int.Parse(args[0]));
-                    while (true)
-                    {
-                        enforcer.WaitForExit();
-                        enforcer.Close();
-                        enforcer = Process.GetProcessById(StartDaemon());
-                    }
+                    enforcer.WaitForExit();
+                    enforcer.Close();
+                    enforcer = Process.GetProcessById(StartDaemon());
                 }
             }
         }
         
         static int StartDaemon()
-        {  
-            using (Process executor = new Process())
-            {           
-                executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
-                executor.StartInfo.RedirectStandardOutput = true;
-                executor.StartInfo.CreateNoWindow = true;
-                executor.Start();
-                var executorResponse = executor.StandardOutput.ReadLine();
-                return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
-            }
+        {
+            using Process executor = new();
+            executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+            executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
+            executor.StartInfo.RedirectStandardOutput = true;
+            executor.StartInfo.CreateNoWindow = true;
+            executor.Start();
+            var executorResponse = executor.StandardOutput.ReadLine();
+            return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
     }
 }

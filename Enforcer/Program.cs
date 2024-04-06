@@ -31,23 +31,9 @@ namespace Enforcer
         [STAThread]
         static void Main(string[] args)
         {
-            using (var mutex = new Mutex(false, "SSDaemon"))
-            {
-                if (mutex.WaitOne(TimeSpan.Zero))
-                {
-                    try
-                    {
-                        Application.Run(new Main(args));
-                    } catch (Exception ex)
-                    {
-                        using (EventLog eventLog = new EventLog("Application"))
-                        {
-                            eventLog.Source = "Application";
-                            eventLog.WriteEntry(ex.ToString(), EventLogEntryType.Error, 101, 1);
-                        }
-                    }
-                }              
-            }
+            using var mutex = new Mutex(false, "SSDaemon");
+            if (mutex.WaitOne(TimeSpan.Zero))
+                Application.Run(new Main(args));
         }
     }
 }

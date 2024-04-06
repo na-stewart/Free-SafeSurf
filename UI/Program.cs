@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
 
 /*
 MIT License
@@ -45,14 +44,13 @@ namespace UI
         static void Main(string[] args)
         {
             Console.Title = "SafeSurf";
-            var powershell = new ProcessStartInfo("powershell")
+            Process.Start(new ProcessStartInfo("powershell")
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{AppDomain.CurrentDomain.BaseDirectory}'"
-            };
-            Process.Start(powershell);
+            });
             while (true)
             {
                 PrintNav();
@@ -105,7 +103,7 @@ namespace UI
             try
             {
                 foreach (Option option in options)
-                    if (!option.isExecutable())
+                    if (!option.IsExecutable())
                         config.Write(option.Name, option.ToString());
                 if (options[0].ToString() == "off" && options[1].ToString() == "off")
                     config.Write("days-enforced", "0");
@@ -124,8 +122,8 @@ namespace UI
             }
             catch (IOException)
             {
-                DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
-                notification = $"SafeSurf enforcer is active! No changes can be made until {parsedDateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
+                DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
+                notification = $"SafeSurf enforcer is active! No changes may be made until {dateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
             }
         }
     }

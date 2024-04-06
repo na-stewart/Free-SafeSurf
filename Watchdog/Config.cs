@@ -29,8 +29,8 @@ namespace Watchdog
     internal class Config
     {
         readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
-        readonly XmlDocument xml = new XmlDocument();
-        static Config instance = null;
+        readonly XmlDocument xml = new();
+        static Config? instance = null;
 
         public string ConfigFile
         {
@@ -41,21 +41,19 @@ namespace Watchdog
         {
             get
             {
-                if (instance == null)
-                    instance = new Config();
+                instance ??= new Config();
                 return instance;
             }
         }
 
         Config()
         {
-            if (File.Exists(configFile))
-                xml.Load(configFile);
+            xml.Load(configFile);
         }
 
-        public string Read(string key)
+        public string ReadExePath()
         {
-            var node = xml.DocumentElement.SelectSingleNode(key);
+            var node = xml.DocumentElement.SelectSingleNode("path");
             return node != null ? node.InnerText : "";
         }
     }

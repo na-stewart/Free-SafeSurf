@@ -29,15 +29,14 @@ namespace UI
     internal class Config
     {
         readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
-        readonly XmlDocument xml = new XmlDocument();
-        static Config instance = null;
+        readonly XmlDocument xml = new();
+        static Config? instance = null;
 
         public static Config Instance
         {
             get
             {
-                if (instance == null)
-                    instance = new Config();
+                instance ??= new Config();
                 return instance;
             }
         }
@@ -57,12 +56,11 @@ namespace UI
         public void Write(string key, string value)
         {
             var parsedKey = key.ToLower().Replace(" ", "-");
-            var rootNode = xml.DocumentElement;
-            var node = rootNode.SelectSingleNode(parsedKey);
+            var node = xml.DocumentElement.SelectSingleNode(parsedKey);
             if (node == null)
             {
                 node = xml.CreateElement(parsedKey);
-                rootNode.AppendChild(node);
+                xml.DocumentElement.AppendChild(node);
             }
             node.InnerText = value;
             xml.Save(configFile);

@@ -26,12 +26,12 @@ namespace UI
 {
     internal class Option
     {
-        string selection;
+        readonly string[]? availableSelections;
+        readonly Action? onSelection;
+        string? selection;
         string name;
-        string[] availableSelections;
         int selectionIndex;
-        Action onSelection;
-
+      
         public string Name
         {
             get => name;
@@ -64,10 +64,10 @@ namespace UI
                 selection = availableSelections[selectionIndex];
             }
             else if (keyInfo.Key == ConsoleKey.Enter)
-                onSelection();
+                onSelection?.Invoke();
         }
 
-        public bool isExecutable()
+        public bool IsExecutable()
         {
             return availableSelections == null;
         }
