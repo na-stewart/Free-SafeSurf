@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 
 /*
 MIT License
@@ -28,6 +29,7 @@ namespace UI
 {
     internal class Program
     {
+        readonly static string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
         readonly static Config config = Config.Instance;
         readonly static Option[] options = {
@@ -49,7 +51,7 @@ namespace UI
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{AppDomain.CurrentDomain.BaseDirectory}'"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
             });
             while (true)
             {
@@ -109,14 +111,13 @@ namespace UI
                     config.Write("days-enforced", "0");
                 else
                 {
-                    config.Write("path", AppDomain.CurrentDomain.BaseDirectory);
+                    config.Write("path", exePath);
                     config.Write("date-enforced", DateTime.Now.ToString());
                 }  
                 Process process = new Process();
-                process.StartInfo.RedirectStandardOutput = true;
                 process.StartInfo.CreateNoWindow = true;
-                process.StartInfo.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSExecutor.exe");
-                process.StartInfo.Arguments = $"\"{Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSDaemon.exe")}\"";
+                process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
                 process.Start();
                 notification = "SafeSurf settings applied successfully!";
             }

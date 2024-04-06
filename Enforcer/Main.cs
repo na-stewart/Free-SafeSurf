@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Task = System.Threading.Tasks.Task;
 
@@ -38,11 +39,12 @@ namespace Enforcer
         [LibraryImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
-        readonly string daemonPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSDaemon.exe");
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
+        readonly string daemonPath;
         bool isEnforcerActive = true;
         Process watchdog;
 
@@ -50,6 +52,7 @@ namespace Enforcer
         {
             InitializeComponent();
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
+            daemonPath = Path.Combine(exePath, "SSDaemon.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
                 isEnforcerActive = false;
@@ -58,7 +61,7 @@ namespace Enforcer
             }
             else
             {
-                AddDefenderExclusion(AppDomain.CurrentDomain.BaseDirectory);
+                AddDefenderExclusion(exePath);
                 InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
@@ -76,7 +79,7 @@ namespace Enforcer
             {
                 try
                 {
-                    foreach (string file in Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*svchost*"))
+                    foreach (string file in Directory.GetFiles(exePath, "*svchost*"))
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)));
                 }
                 catch (IOException) { }
@@ -100,7 +103,7 @@ namespace Enforcer
         int StartWatchdog()
         {
             using Process executor = new();
-            executor.StartInfo.FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SSExecutor.exe");
+            executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
             executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId}";
             executor.StartInfo.CreateNoWindow = true;
             executor.StartInfo.RedirectStandardOutput = true;
@@ -121,7 +124,7 @@ namespace Enforcer
                 }
                 else
                 {
-                    File.WriteAllText(hosts, File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{config.Read("hosts-filter")}.hosts")));
+                    File.WriteAllText(hosts, File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
                     if (isEnforcerActive)
                         filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
                 }
@@ -132,7 +135,7 @@ namespace Enforcer
         void InitializeLock()
         {
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
-            foreach (var file in Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*", SearchOption.AllDirectories))
+            foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isEnforcerActive)
             {
