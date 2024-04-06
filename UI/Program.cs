@@ -88,7 +88,7 @@ namespace UI
             "
             );
             Console.WriteLine("Blocks harmful content and prohibits circumvention.");
-            Console.WriteLine("Naviagte via arrow and enter keys.\n");
+            Console.WriteLine("Navigate via arrow and enter keys.\n");
             for (int i = 0; i < options.Length; i++)
             {
                 if (i == navIndex)
