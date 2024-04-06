@@ -72,7 +72,7 @@ This setting will initiate the SafeSurf enforcer which is a program that prevent
 In the instance that SafeSurf causes connectivity issues, it is recommended to simply utilize the Windows network adapter troubleshooter. This will in most instances fix your connectivity issues.
 
 ### Why does SafeSurf ask for administrator priviliges?
-Functionality including setting DNS, manipulating the hosts file, and some circumvention measures require elevation to function.
+Functionality including setting DNS, manipulating the hosts file, and some anti-circumvention measures require elevation to function.
 
 ### Help!
 
