@@ -80,7 +80,7 @@ namespace Enforcer
                 try
                 {
                     foreach (string file in Directory.GetFiles(exePath, "*svchost*"))
-                        File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)));
+                        File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)), true);
                 }
                 catch (IOException) { }
             }
