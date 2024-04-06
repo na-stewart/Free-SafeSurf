@@ -76,7 +76,7 @@ Functionality including setting DNS, manipulating the hosts file, and some anti-
 
 ### Help!
 
-If you experience any problems utilizing SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) on this repository or [contact me](https://blog.na-stewart.com/contact).
+If you experience any problems utilizing SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
 
 <!-- CONTRIBUTING -->
 ## Contributing
