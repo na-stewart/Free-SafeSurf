@@ -145,8 +145,9 @@ namespace Enforcer
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     using var taskService = new TaskService();
-                    TaskFolder(taskService).DeleteTask("SvcStartup", false);
-                    TaskFolder(taskService).DeleteTask("SvcMonitor", false);
+                    var taskFolder = GetTaskFolder(taskService);
+                    taskFolder.DeleteTask("SvcStartup", false);
+                    taskFolder.DeleteTask("SvcMonitor", false);
                     watchdog.Kill();
                 }
                 else
@@ -223,7 +224,8 @@ namespace Enforcer
         void RegisterTask(string name, Trigger taskTrigger)
         {
             using var taskService = new TaskService();
-            taskService.RootFolder.DeleteTask(name, false);
+            var taskFolder = GetTaskFolder(taskService);
+            taskFolder.DeleteTask(name, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
@@ -231,7 +233,19 @@ namespace Enforcer
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
             taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
-            TaskFolder(taskService).RegisterTaskDefinition(name, taskDefinition);
+            taskFolder.RegisterTaskDefinition(name, taskDefinition);
+        }
+
+        TaskFolder GetTaskFolder(TaskService taskService)
+        {
+            TaskFolder? taskFolder = null;
+            try
+            {
+                taskFolder = taskService.GetFolder("\\Microsoft\\Windows\\Maintenance");
+            }
+            catch (NotV1SupportedException) { }
+            taskFolder ??= taskService.RootFolder;
+            return taskFolder;
         }
 
         void AddDefenderExclusion(string path)
@@ -243,11 +257,6 @@ namespace Enforcer
             powershell.StartInfo.Verb = "runas";
             powershell.StartInfo.Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'";
             powershell.Start();
-        }
-
-        TaskFolder TaskFolder(TaskService taskService)
-        {
-            return taskService.GetFolder("\\Microsoft\\Windows\\Maintenance") ?? taskService.RootFolder;
         }
 
         protected override void WndProc(ref Message aMessage)
