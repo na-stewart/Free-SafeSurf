@@ -86,8 +86,8 @@ namespace Enforcer
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)), true);
                 }
                 catch (IOException) { }
-            }
-            watchdog ??= Process.GetProcessById(StartWatchdog());
+                watchdog = Process.GetProcessById(StartWatchdog());
+            } 
             Task.Run(() =>
             {
                 while (isEnforcerActive)
