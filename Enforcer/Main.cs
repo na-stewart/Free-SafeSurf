@@ -94,9 +94,8 @@ namespace Enforcer
                 {
                     watchdog.WaitForExit();
                     watchdog.Close();
-                    if (!isEnforcerActive)
-                        continue;
-                    watchdog = Process.GetProcessById(StartWatchdog());
+                    if (isEnforcerActive)
+                        watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
             foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
@@ -183,9 +182,8 @@ namespace Enforcer
                     catch (SocketException) { }
                     DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
                     isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
-                    if (isExpired)
-                        continue;
-                    Thread.Sleep(60000);
+                    if (!isExpired)
+                        Thread.Sleep(60000);
                 }
             });
         }
