@@ -6,6 +6,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using Task = System.Threading.Tasks.Task;
 
 /*
@@ -41,6 +42,7 @@ namespace Enforcer
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly WindowsIdentity identity = WindowsIdentity.GetCurrent();
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
@@ -148,8 +150,8 @@ namespace Enforcer
                         filePadlock.Close();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
-                    taskFolder.DeleteTask("SvcStartup", false);
-                    taskFolder.DeleteTask("SvcMonitor", false);
+                    taskFolder.DeleteTask($"SvcStartup-{identity.User.Value}", false);
+                    taskFolder.DeleteTask($"SvcMonitor-{identity.User.Value}", false);
                     watchdog.Kill();
                 }
                 else
@@ -234,9 +236,10 @@ namespace Enforcer
 
         void RegisterTask(string name, Trigger taskTrigger)
         {
+            var nameSid = $"{name}-{identity.User.Value}";
             using var taskService = new TaskService();
             var taskFolder = GetTaskFolder(taskService);
-            taskFolder.DeleteTask(name, false);
+            taskFolder.DeleteTask(nameSid, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
@@ -244,7 +247,7 @@ namespace Enforcer
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
             taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
-            taskFolder.RegisterTaskDefinition(name, taskDefinition);
+            taskFolder.RegisterTaskDefinition(nameSid, taskDefinition);
         }
 
         TaskFolder GetTaskFolder(TaskService taskService)
