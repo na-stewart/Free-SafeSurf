@@ -180,11 +180,11 @@ namespace Enforcer
             }
             catch (SocketException) { }
             DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
-            isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
+            isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
             if (!isExpired && !expirationTimer.Enabled)
             {
                 expirationTimer.AutoReset = true;
-                expirationTimer.Elapsed += (object? source, System.Timers.ElapsedEventArgs e) => CheckExpiration();
+                expirationTimer.Elapsed += (_, _) => CheckExpiration();
                 expirationTimer.Start();
             }
         }
