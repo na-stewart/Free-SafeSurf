@@ -10,7 +10,7 @@
     <AssemblyName>SSDaemon</AssemblyName>
     <Title></Title>
     <Authors></Authors>
-    <Company></Company>
+    <Company>SafeSurf</Company>
     <StartupObject>Enforcer.Program</StartupObject>
     <ApplicationIcon>safe-surf.ico</ApplicationIcon>
     <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>

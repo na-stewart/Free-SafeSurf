@@ -10,5 +10,6 @@
     <StartupObject>Watchdog.Program</StartupObject>
 	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 	<ApplicationManifest>app.manifest</ApplicationManifest>
+	<Company>SafeSurf</Company>
   </PropertyGroup>
 </Project>

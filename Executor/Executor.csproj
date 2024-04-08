@@ -9,7 +9,7 @@
     <AssemblyName>SSExecutor</AssemblyName>
     <Title>$(AssemblyName)</Title>
     <Authors></Authors>
-    <Company></Company>
+    <Company>SafeSurf</Company>
     <StartupObject>Executor.Program</StartupObject>
     <ApplicationIcon>safe-surf.ico</ApplicationIcon>
     <Copyright>Copyright (c) 2024 Nicholas Aidan Stewart</Copyright>
