@@ -180,7 +180,7 @@ namespace Enforcer
             }
             catch (SocketException) { }
             DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
-            isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddSeconds(int.Parse(config.Read("days-enforced")));
             if (!isExpired && !expirationTimer.Enabled)
             {
                 expirationTimer.AutoReset = true;
