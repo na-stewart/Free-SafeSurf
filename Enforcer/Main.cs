@@ -181,8 +181,8 @@ namespace Enforcer
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartup", new LogonTrigger());
-                    RegisterTask("SvcMonitor", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
+                    RegisterTask($"SvcStartup-{identity.User.Value}", new LogonTrigger());
+                    RegisterTask($"SvcMonitor-{identity.User.Value}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     Thread.Sleep(4000);
                 }          
             }
@@ -236,7 +236,7 @@ namespace Enforcer
         {
             using var taskService = new TaskService();
             var taskFolder = GetTaskFolder(taskService);
-            taskFolder.DeleteTask($"{name}-{identity.User.Value}", false);
+            taskFolder.DeleteTask(name, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
@@ -244,7 +244,7 @@ namespace Enforcer
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
             taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
-            taskFolder.RegisterTaskDefinition($"{name}-{identity.User.Value}", taskDefinition);
+            taskFolder.RegisterTaskDefinition(name, taskDefinition);
         }
 
         TaskFolder GetTaskFolder(TaskService taskService)
