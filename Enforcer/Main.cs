@@ -69,8 +69,7 @@ namespace Enforcer
                 AddDefenderExclusion(exePath);
                 InitializeWatchdog(args);
                 SetHosts();
-                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
-                InitializeExpirationTimer();
+                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");       
                 InitializeEnforcer();
             }
             Environment.Exit(0);
@@ -137,30 +136,9 @@ namespace Enforcer
             catch (IOException) { }
         }
 
-        void InitializeExpirationTimer()
-        {
-            expirationTimer.AutoReset = true;
-            expirationTimer.Elapsed += (object? source, System.Timers.ElapsedEventArgs e) =>
-            {
-                DateTime? networkDateTime = null;
-                try
-                {
-                    using var tcpClient = new TcpClient();
-                    if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500))
-                    {
-                        using var streamReader = new StreamReader(tcpClient.GetStream());
-                        networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-                    }
-                }
-                catch (SocketException) { }
-                DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
-                isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
-            };
-            expirationTimer.Start();
-        }
-
         void InitializeEnforcer()
         {
+            CheckExpiration();
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -185,6 +163,29 @@ namespace Enforcer
                     RegisterTask($"SvcMonitor-{identity.User.Value}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     Thread.Sleep(4000);
                 }          
+            }
+        }
+
+        void CheckExpiration()
+        {
+            DateTime? networkDateTime = null;
+            try
+            {
+                using var tcpClient = new TcpClient();
+                if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500))
+                {
+                    using var streamReader = new StreamReader(tcpClient.GetStream());
+                    networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                }
+            }
+            catch (SocketException) { }
+            DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
+            isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            if (!isExpired && !expirationTimer.Enabled)
+            {
+                expirationTimer.AutoReset = true;
+                expirationTimer.Elapsed += (object? source, System.Timers.ElapsedEventArgs e) => CheckExpiration();
+                expirationTimer.Start();
             }
         }
 
