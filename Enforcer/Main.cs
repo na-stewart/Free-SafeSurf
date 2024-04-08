@@ -78,6 +78,7 @@ namespace Enforcer
         void InitializeWatchdog(string[] args)
         {
             AddDefenderExclusion(watchdogPath);
+            AddDefenderExclusion(watchdogPath.Replace("exe", "dll"));
             if (args.Length > 0)
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
@@ -268,7 +269,7 @@ namespace Enforcer
             powershell.StartInfo.UseShellExecute = false;
             powershell.StartInfo.CreateNoWindow = true;
             powershell.StartInfo.Verb = "runas";
-            powershell.StartInfo.Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}' -ExclusionProcess '{daemonPath}'";
+            powershell.StartInfo.Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'";
             powershell.Start();
         }
 
