@@ -46,7 +46,7 @@ SafeSurf is privacy friendly as absolutely no data is collected and it is comple
 
 SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf`. 
 
-Works with multiple local accounts so that SafeSurf can be activated for specific users.
+Works with multiple local accounts so that SafeSurf can be activated for specific users of a single device.
 
 This program will ***only*** be available for download on this repository. Any instances found elsewhere may be malicious.
 
