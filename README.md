@@ -65,7 +65,7 @@ Network level content filtering is implemented via a service called [CleanBrowsi
 - Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
   
 ### Days Enforced
-This setting will initiate the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until the enforcer expires. It is recommended to experiment with SafeSurf and see what works well for you before enabling the enforcer.
+This setting will initiate the SafeSurf enforcer which is a program that prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, any SafeSurf settings that have been enabled cannot be changed until it expires. It is recommended to experiment with SafeSurf and see what works well for you before enabling the enforcer.
 
 ## Troubleshooting
 
