@@ -36,8 +36,7 @@
 
 SafeSurf for Windows can protect you and your loved ones from harmful materials online.
 
-Configurable bypass prevention prevents the user from disabling the filter or making changes to settings for
-a certain period of time.
+Bypass prevention prevents the user from disabling the filter or making changes to settings for a certain period of time.
 
 SafeSurf is privacy friendly as absolutely no data is collected and it is completely free and open source.
 
