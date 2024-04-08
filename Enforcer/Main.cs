@@ -51,7 +51,6 @@ namespace Enforcer
         Process watchdog;
         bool isExpired;
        
-
         public Main(string[] args)
         {
             InitializeComponent();
@@ -163,7 +162,6 @@ namespace Enforcer
                 }          
             }
         }
-
 
         void InitializeEnforcerExpirationCheck()
         {
