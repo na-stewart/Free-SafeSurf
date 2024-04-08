@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using Task = System.Threading.Tasks.Task;
+using Timer = System.Timers.Timer;
 
 /*
 MIT License
@@ -47,6 +48,7 @@ namespace Enforcer
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
         readonly string daemonPath;
+        Timer expirationTimer = new(86400000);
         bool isEnforcerActive = true;
         Process watchdog;
         bool isExpired;
@@ -68,7 +70,7 @@ namespace Enforcer
                 InitializeWatchdog(args);
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
-                InitializeExpirationCheck();
+                InitializeExpirationTimer();
                 InitializeEnforcer();
             }
             Environment.Exit(0);
@@ -135,29 +137,26 @@ namespace Enforcer
             catch (IOException) { }
         }
 
-        void InitializeExpirationCheck()
+        void InitializeExpirationTimer()
         {
-            Task.Run(() =>
+            expirationTimer.AutoReset = true;
+            expirationTimer.Elapsed += (object? source, System.Timers.ElapsedEventArgs e) =>
             {
-                while (!isExpired)
+                DateTime? networkDateTime = null;
+                try
                 {
-                    DateTime? networkDateTime = null;
-                    try
+                    using var tcpClient = new TcpClient();
+                    if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500))
                     {
-                        using var tcpClient = new TcpClient();
-                        if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500))
-                        {
-                            using var streamReader = new StreamReader(tcpClient.GetStream());
-                            networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-                        }
+                        using var streamReader = new StreamReader(tcpClient.GetStream());
+                        networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
                     }
-                    catch (SocketException) { }
-                    DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
-                    isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
-                    if (!isExpired)
-                        Thread.Sleep(86400000);
                 }
-            });
+                catch (SocketException) { }
+                DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
+                isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
+            };
+            expirationTimer.Start();
         }
 
         void InitializeEnforcer()
@@ -169,7 +168,8 @@ namespace Enforcer
             {
                 if (isExpired)
                 {
-                    isEnforcerActive = false;             
+                    expirationTimer.Stop();
+                    isEnforcerActive = false;       
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     using var taskService = new TaskService();
