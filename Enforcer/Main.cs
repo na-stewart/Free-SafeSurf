@@ -185,7 +185,7 @@ namespace Enforcer
                     DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
                     isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
                     if (!isExpired)
-                        Thread.Sleep(60000);
+                        Thread.Sleep(86400000);
                 }
             });
         }

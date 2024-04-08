@@ -124,7 +124,7 @@ namespace UI
             catch (IOException)
             {
                 DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
-                notification = $"SafeSurf enforcer is active! No changes may be made until {dateEnforced.AddDays(int.Parse(config.Read("days-enforced")))}.";
+                notification = $"SafeSurf enforcer is active! No changes may be made until {dateEnforced.AddDays(int.Parse(config.Read("days-enforced"))).ToShortDateString()}.";
             }
         }
     }
