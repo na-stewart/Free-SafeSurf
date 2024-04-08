@@ -77,7 +77,6 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-            AddDefenderExclusion(watchdogPath);
             AddDefenderExclusion(watchdogPath.Replace("exe", "dll"));
             if (args.Length > 0)
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
