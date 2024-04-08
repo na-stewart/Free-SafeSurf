@@ -236,10 +236,9 @@ namespace Enforcer
 
         void RegisterTask(string name, Trigger taskTrigger)
         {
-            var nameSid = $"{name}-{identity.User.Value}";
             using var taskService = new TaskService();
             var taskFolder = GetTaskFolder(taskService);
-            taskFolder.DeleteTask(nameSid, false);
+            taskFolder.DeleteTask($"{name}-{identity.User.Value}", false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
@@ -247,7 +246,7 @@ namespace Enforcer
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
             taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
-            taskFolder.RegisterTaskDefinition(nameSid, taskDefinition);
+            taskFolder.RegisterTaskDefinition($"{name}-{identity.User.Value}", taskDefinition);
         }
 
         TaskFolder GetTaskFolder(TaskService taskService)
