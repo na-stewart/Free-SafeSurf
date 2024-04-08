@@ -80,11 +80,6 @@ Functionality including setting DNS, manipulating the hosts file, and some anti-
 
 If you experience any problems utilizing SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
 
-## Roadmap
-
-- Enforcer override key.
-- Automatic user-wide installation.
-
 <!-- CONTRIBUTING -->
 ## Contributing
 
