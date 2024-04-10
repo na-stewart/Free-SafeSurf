@@ -28,7 +28,7 @@ namespace Watchdog
 {
     internal class Config
     {
-        readonly string configFile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\SafeSurf.config";
+        readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SafeSurf.config");
         readonly XmlDocument xml = new();
         static Config? instance = null;
 
