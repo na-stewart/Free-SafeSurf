@@ -52,7 +52,7 @@ namespace Enforcer
         bool isEnforcerActive = true;
         Process watchdog;
         bool isExpired;
-       
+
         public Main(string[] args)
         {
             InitializeComponent();
@@ -69,7 +69,7 @@ namespace Enforcer
                 AddDefenderExclusion(exePath);
                 InitializeWatchdog(args);
                 SetHosts();
-                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");       
+                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
                 InitializeEnforcer();
             }
             Environment.Exit(0);
@@ -89,7 +89,7 @@ namespace Enforcer
                 }
                 catch (IOException) { }
                 watchdog = Process.GetProcessById(StartWatchdog());
-            } 
+            }
             Task.Run(() =>
             {
                 while (isEnforcerActive)
@@ -139,6 +139,7 @@ namespace Enforcer
         void InitializeEnforcer()
         {
             CheckExpiration();
+            var taskSuffix = Config.Instance.Read("roaming") == "on" ? string.Empty : $"-{identity.User.Value}";
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -147,22 +148,22 @@ namespace Enforcer
                 if (isExpired)
                 {
                     expirationTimer.Stop();
-                    isEnforcerActive = false;       
+                    isEnforcerActive = false;
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
-                    taskFolder.DeleteTask($"SvcStartup-{identity.User.Value}", false);
-                    taskFolder.DeleteTask($"SvcMonitor-{identity.User.Value}", false);
+                    taskFolder.DeleteTask($"SvcStartup{taskSuffix}", false);
+                    taskFolder.DeleteTask($"SvcMonitor{taskSuffix}", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask($"SvcStartup-{identity.User.Value}", new LogonTrigger());
-                    RegisterTask($"SvcMonitor-{identity.User.Value}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
+                    RegisterTask($"SvcStartup{taskSuffix}", new LogonTrigger());
+                    RegisterTask($"SvcMonitor{taskSuffix}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     Thread.Sleep(4000);
-                }          
+                }
             }
         }
 
