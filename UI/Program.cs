@@ -36,16 +36,12 @@ namespace UI
             new Option("Hosts Filter", ["off", "adult", "gambling", "family"]),
             new Option("CleanBrowsing DNS Filter", ["off", "adult", "family"]),
             new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "180", "365"]),
-            new Option("Roaming", ["off", "on"]),
             new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
         };
         static string notification = "";
         static int navIndex = 0;
      
-        /*
-        Setup roaming: Change exe path to roaming path, move directory to System32, execute SafeSurf.
-        */
         static void Main(string[] args)
         {
             Console.Title = "SafeSurf";
@@ -129,11 +125,6 @@ namespace UI
                 DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
                 notification = $"SafeSurf enforcer is active! No changes may be made until {dateEnforced.AddDays(int.Parse(config.Read("days-enforced"))).ToShortDateString()}.";
             }
-        }
-
-        static void SetupRoaming()
-        {
-            Directory.Move(sourceDir, destinationDir);
         }
     }
 }

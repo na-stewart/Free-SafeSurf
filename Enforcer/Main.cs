@@ -139,7 +139,6 @@ namespace Enforcer
         void InitializeEnforcer()
         {
             CheckExpiration();
-            var taskSuffix = Config.Instance.Read("roaming") == "on" ? string.Empty : $"-{identity.User.Value}";
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -153,15 +152,15 @@ namespace Enforcer
                         filePadlock.Close();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
-                    taskFolder.DeleteTask($"SvcStartup{taskSuffix}", false);
-                    taskFolder.DeleteTask($"SvcMonitor{taskSuffix}", false);
+                    taskFolder.DeleteTask($"SvcStartup-{identity.User.Value}", false);
+                    taskFolder.DeleteTask($"SvcMonitor-{identity.User.Value}", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask($"SvcStartup{taskSuffix}", new LogonTrigger());
-                    RegisterTask($"SvcMonitor{taskSuffix}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
+                    RegisterTask($"SvcStartup-{identity.User.Value}", new LogonTrigger());
+                    RegisterTask($"SvcMonitor-{identity.User.Value}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     Thread.Sleep(4000);
                 }
             }
@@ -244,7 +243,6 @@ namespace Enforcer
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-            taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
             taskFolder.RegisterTaskDefinition(name, taskDefinition);
