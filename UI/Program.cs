@@ -116,13 +116,10 @@ namespace UI
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
                 process.Start();
-                notification = "SafeSurf settings applied successfully!";
+               
             }
-            catch (IOException)
-            {
-                DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
-                notification = $"SafeSurf enforcer is active! No changes may be made until {dateEnforced.AddDays(int.Parse(config.Read("days-enforced"))).ToShortDateString()}.";
-            }
+            catch (IOException) { }
+            notification = "SafeSurf settings applied!";
         }
     }
 }
