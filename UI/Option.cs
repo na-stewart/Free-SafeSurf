@@ -72,7 +72,7 @@ namespace UI
             return availableSelections == null;
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
             return selection;
         }

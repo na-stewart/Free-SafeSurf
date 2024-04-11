@@ -107,18 +107,23 @@ namespace UI
                     if (!option.IsExecutable())
                         config.Write(option.Name, option.ToString());
                 if (options[0].ToString() == "off" && options[1].ToString() == "off")
-                    config.Write("days-enforced", "0");
+                    notification = "Both SafeSurf filters appear to be off.";         
                 else
-                    config.Write("date-enforced", DateTime.Now.ToString());
-                Process process = new Process();
-                process.StartInfo.CreateNoWindow = true;
-                process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-                process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
-                process.Start();
-               
+                {
+                    if (options[2].ToString() != "0")
+                        config.Write("date-enforced", DateTime.Now.ToString());
+                    notification = "SafeSurf settings applied!";
+                    Process process = new();
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+                    process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
+                    process.Start();
+                }                  
             }
-            catch (IOException) { }
-            notification = "SafeSurf settings applied!";
+            catch (IOException) 
+            {
+                notification = "SafeSurf settings could not be applied.";
+            }
         }
     }
 }

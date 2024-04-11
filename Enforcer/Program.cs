@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-/*
+﻿/*
 MIT License
 
 Copyright (c) 2024 Nicholas Aidan Stewart

@@ -177,7 +177,7 @@ namespace Enforcer
             catch (SocketException) { }
             DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
             isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
-            if (!isExpired && !expirationTimer.Enabled)
+            if (!expirationTimer.Enabled && !isExpired)
             {
                 expirationTimer.AutoReset = true;
                 expirationTimer.Elapsed += (_, _) => CheckExpiration();
