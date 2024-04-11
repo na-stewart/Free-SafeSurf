@@ -137,7 +137,6 @@ namespace Enforcer
         void InitializeEnforcer()
         {
             CheckExpiration();
-            filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (string path in new string[]{ exePath, RuntimeEnvironment.GetRuntimeDirectory() })
                 foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))          
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));               
