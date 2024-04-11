@@ -138,8 +138,11 @@ namespace Enforcer
         {
             CheckExpiration();
             filePadlocks.Add(new FileStream(config.ConfigFile, FileMode.Open, FileAccess.Read, FileShare.Read));
-            foreach (var file in Directory.GetFiles(exePath, "*", SearchOption.AllDirectories))
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            foreach (string directory in new string[]{ exePath, RuntimeEnvironment.GetRuntimeDirectory() })
+            {
+                foreach (var file in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))          
+                    filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));               
+            }
             while (isEnforcerActive)
             {
                 if (isExpired)
