@@ -29,7 +29,7 @@ namespace UI
 {
     internal class Program
     {
-        readonly static string? exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "bin");
+        readonly static string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
         readonly static Config config = Config.Instance;
         readonly static Option[] options = {
@@ -38,10 +38,11 @@ namespace UI
             new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "180", "365"]),
             new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
+
         };
         static string notification = "";
         static int navIndex = 0;
-     
+
         static void Main(string[] args)
         {
             Console.Title = "SafeSurf";
@@ -80,10 +81,10 @@ namespace UI
             Console.WriteLine(@"
      _____        __        _____             __ 
     / ____|      / _|      / ____|           / _|
-   | (___   ____| |_ ___  | (___  _   _ _ __| |_ 
-    \___ \ / _  |  _/ _ \  \___ \| | | | '__|  _|
+   | (___   __ _| |_ ___  | (___  _   _ _ __| |_ 
+    \___ \ / _` |  _/ _ \  \___ \| | | | '__|  _|
     ____) | (_| | ||  __/  ____) | |_| | |  | |  
-   |_____/ \____|_| \___| |_____/ \____|_|  |_|                                 
+   |_____/ \__,_|_| \___| |_____/ \__,_|_|  |_|                                 
             "
             );
             Console.WriteLine("Blocks harmful content and prohibits circumvention.");
@@ -112,7 +113,7 @@ namespace UI
                 {
                     config.Write("path", exePath);
                     config.Write("date-enforced", DateTime.Now.ToString());
-                }  
+                }
                 Process process = new Process();
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
