@@ -110,10 +110,7 @@ namespace UI
                 if (options[0].ToString() == "off" && options[1].ToString() == "off")
                     config.Write("days-enforced", "0");
                 else
-                {
-                    config.Write("path", exePath);
                     config.Write("date-enforced", DateTime.Now.ToString());
-                }
                 Process process = new Process();
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");

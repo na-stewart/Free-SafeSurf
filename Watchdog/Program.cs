@@ -28,7 +28,6 @@ namespace Watchdog
 {
     internal static class Program
     {
-        static readonly string exePath = Config.Instance.ReadExePath();
 
         static void Main(string[] args)
         {
@@ -40,12 +39,12 @@ namespace Watchdog
                 {
                     enforcer.WaitForExit();
                     enforcer.Close();
-                    enforcer = Process.GetProcessById(StartDaemon());
+                    enforcer = Process.GetProcessById(StartDaemon(args[1]));
                 }
             }
         }
         
-        static int StartDaemon()
+        static int StartDaemon(string exePath)
         {
             using Process executor = new();
             executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");

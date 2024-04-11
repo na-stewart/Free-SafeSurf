@@ -33,7 +33,7 @@ namespace Executor
             using Process process = new();
             process.StartInfo.FileName = args[0];
             if (args.Length > 1)
-                process.StartInfo.Arguments = args[1];
+                process.StartInfo.Arguments = string.Join(" ", args, 1, args.Length - 1);
             process.Start();
             Console.WriteLine(process.Id);
             Environment.Exit(0);

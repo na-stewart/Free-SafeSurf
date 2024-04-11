@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Reflection;
+using System.Xml;
 
 /*
 MIT License
@@ -28,7 +29,7 @@ namespace UI
 {
     internal class Config
     {
-        readonly string configFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SafeSurf.config");
+        readonly string configFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SafeSurf.config");
         readonly XmlDocument xml = new();
         static Config? instance = null;
 
