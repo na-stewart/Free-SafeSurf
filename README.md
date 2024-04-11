@@ -75,8 +75,15 @@ In the instance that SafeSurf causes connectivity issues, it is recommended to s
 ### Why does SafeSurf ask for administrator priviliges?
 Functionality including setting DNS, manipulating the hosts file, and some anti-circumvention measures require elevation to function.
 
-### Help!
+### Accountability Partner
+If necessary, set up an "accountability partner" account on Windows that would act as the adminstrator of your device. Next remove administrator privileges from other users, 
+including your own if needed. The password for the account would then be disclosed to someone you trust to provide the password/permissions only when required.
 
+### SafeSurf is being detected as a virus.
+It may occur that SafeSurf is detected as a virus by your antivirus due to the anti-circumvention measures of the enforcer and because this application is not yet registered with a publisher. 
+To reiterate, SafeSurf is not a malicious program. This can be solved by making an exception for SafeSurf in your respective antivirus, make sure to do so with the directory SafeSurf is located in.
+
+### Help!
 If you experience any problems utilizing SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
 
 <!-- CONTRIBUTING -->
