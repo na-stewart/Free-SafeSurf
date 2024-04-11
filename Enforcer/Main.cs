@@ -106,7 +106,7 @@ namespace Enforcer
         {
             using Process executor = new();
             executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-            executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} {exePath}";
+            executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} \"{exePath}\"";
             executor.StartInfo.CreateNoWindow = true;
             executor.StartInfo.RedirectStandardOutput = true;
             executor.Start();
