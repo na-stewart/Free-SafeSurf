@@ -6,7 +6,6 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using Task = System.Threading.Tasks.Task;
 using Timer = System.Timers.Timer;
 
@@ -43,11 +42,11 @@ namespace Enforcer
         public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly Timer expirationTimer = new(86400000);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
         readonly string daemonPath;
-        Timer expirationTimer = new(86400000);
         bool isEnforcerActive = true;
         Process watchdog;
         bool isExpired;

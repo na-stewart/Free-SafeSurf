@@ -43,7 +43,7 @@ namespace UI
         static string notification = "";
         static int navIndex = 0;
 
-        static void Main(string[] args)
+        static void Main()
         {
             Console.Title = "SafeSurf";
             Process.Start(new ProcessStartInfo("powershell")

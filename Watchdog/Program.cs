@@ -28,7 +28,6 @@ namespace Watchdog
 {
     internal static class Program
     {
-
         static void Main(string[] args)
         {
             using var mutex = new Mutex(false, "SSWatchdog");
