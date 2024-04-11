@@ -32,14 +32,13 @@ namespace UI
         readonly static string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly static ValueTuple<int, int> initialCursorPos = Console.GetCursorPosition();
         readonly static Config config = Config.Instance;
-        readonly static Option[] options = {
+        readonly static Option[] options = [
             new Option("Hosts Filter", ["off", "adult", "gambling", "family"]),
             new Option("CleanBrowsing DNS Filter", ["off", "adult", "family"]),
             new Option("Days Enforced", ["0", "1", "7", "14", "30", "60", "180", "365"]),
             new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
-
-        };
+        ];
         static string notification = "";
         static int navIndex = 0;
 
