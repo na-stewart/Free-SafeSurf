@@ -45,6 +45,8 @@ SafeSurf is privacy friendly as absolutely no data is collected and it is comple
 
 SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf`. 
 
+May require installation of ***.NET Desktop Runtime:*** [https://dotnet.microsoft.com/en-us/download](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+
 This program will ***only*** be available for download on this repository. Any instances found elsewhere may be malicious.
 
 <ins>Before activation, make sure you understand what each setting does.</ins>
