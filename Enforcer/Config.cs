@@ -29,14 +29,11 @@ namespace Enforcer
 {
     internal class Config
     {
-        readonly string configFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SafeSurf.config");
+        readonly string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SafeSurf.config");
         readonly XmlDocument xml = new();
         static Config? instance = null;
 
-        public string ConfigFile
-        {
-            get => configFile;
-        }
+        public string File { get; private set; }
 
         public static Config Instance
         {
@@ -49,7 +46,7 @@ namespace Enforcer
 
         Config()
         {
-            xml.Load(configFile);
+            xml.Load(path);
         }
 
         public string Read(string key)

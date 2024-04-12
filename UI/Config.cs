@@ -29,7 +29,7 @@ namespace UI
 {
     internal class Config
     {
-        readonly string configFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SafeSurf.config");
+        readonly string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SafeSurf.config");
         readonly XmlDocument xml = new();
         static Config? instance = null;
 
@@ -44,13 +44,13 @@ namespace UI
 
         Config()
         {
-            if (File.Exists(configFile))
-                xml.Load(configFile);
+            if (File.Exists(path))
+                xml.Load(path);
             else
             {
                 XmlElement root = xml.CreateElement("Config");
                 xml.AppendChild(root);
-                xml.Save(configFile);
+                xml.Save(path);
             }
         }
 
@@ -64,7 +64,7 @@ namespace UI
                 xml.DocumentElement.AppendChild(node);
             }
             node.InnerText = value;
-            xml.Save(configFile);
+            xml.Save(path);
         }
 
         public string Read(string key)
