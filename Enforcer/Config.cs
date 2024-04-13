@@ -33,7 +33,7 @@ namespace Enforcer
         readonly XmlDocument xml = new();
         static Config? instance = null;
 
-        public string File { get { return path; } }
+        public string File { get => path; }
 
         public static Config Instance
         {
