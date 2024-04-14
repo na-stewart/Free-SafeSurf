@@ -11,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="https://github.com/na-stewart/SafeSurf/blob/master/img/safe-surf.png" alt="Logo" width="350" height="350">
+    <img src="https://github.com/na-stewart/SafeSurf/blob/master/safesurf.png" alt="Logo" width="350" height="350">
   </a>
   <p align="center">
     Blocks harmful content and prohibits circumvention.
