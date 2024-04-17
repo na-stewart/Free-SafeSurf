@@ -65,7 +65,7 @@ namespace Enforcer
             else // Enforcer is activated.
             {
                 AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
-                InitializeWatchdog(args); // Prevents closure of enforcer by immediately reopening it.
+                InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active."); // Prevents closure via logout.
                 InitializeEnforcer();  // Applies SafeSurf settings repeatedly to prevent circumvention.
