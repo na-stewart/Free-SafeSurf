@@ -62,12 +62,12 @@ namespace Enforcer
                 SetHosts();
                 SetCleanBrowsingDNS();
             }
-            else
+            else // Enforcer is activated.
             {
                 AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Prevents closure of enforcer by immediately reopening it.
                 SetHosts();
-                ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
+                ShutdownBlockReasonCreate(Handle, "Enforcer is active."); // Prevents closure via logout.
                 InitializeEnforcer();  // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
             Environment.Exit(0);
@@ -98,7 +98,7 @@ namespace Enforcer
                         watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*")) // Prevents closure by deleting critical files.
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
@@ -139,7 +139,7 @@ namespace Enforcer
             ExpirationCheck();
             filePadlocks.Add(new FileStream(config.File, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents closure via deleting critical files.
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents closure by deleting critical files.
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isEnforcerActive)
             {
@@ -236,6 +236,7 @@ namespace Enforcer
             taskFolder.DeleteTask(name, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
+            // Disguised as a service task to prevent deletion.
             taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
