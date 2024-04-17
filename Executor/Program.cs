@@ -30,13 +30,13 @@ namespace Executor
     {
         static void Main(string[] args)
         {
-            using Process process = new();
+            using Process process = new(); 
             process.StartInfo.FileName = args[0];
             if (args.Length > 1)
                 process.StartInfo.Arguments = string.Join(" ", args, 1, args.Length - 1);
-            process.Start();
+            process.Start(); // Starts desired process passed via arguments as child of executor.
             Console.WriteLine(process.Id);
-            Environment.Exit(0);
+            Environment.Exit(0); // Exits to detach child process so it runs independently which prevents closure via Task Manager.
         }
     }
 }

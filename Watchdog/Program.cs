@@ -34,7 +34,7 @@ namespace Watchdog
             if (mutex.WaitOne(TimeSpan.Zero))
             {
                 Process enforcer = Process.GetProcessById(int.Parse(args[0]));
-                while (true)
+                while (true) // Prevents closure of enforcer by immediately reopening it.
                 {
                     enforcer.WaitForExit();
                     enforcer.Close();

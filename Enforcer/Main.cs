@@ -58,17 +58,17 @@ namespace Enforcer
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
-                isEnforcerActive = false;
+                isEnforcerActive = false; // Applies SafeSurf settings once.
                 SetHosts();
                 SetCleanBrowsingDNS();
             }
             else
             {
-                AddDefenderExclusion(exePath);
-                InitializeWatchdog(args);
+                AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
+                InitializeWatchdog(args); // Prevents closure of enforcer by immediately reopening it.
                 SetHosts();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active.");
-                InitializeEnforcer();
+                InitializeEnforcer();  // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
             Environment.Exit(0);
         }
@@ -82,7 +82,7 @@ namespace Enforcer
             {
                 try
                 {
-                    foreach (string file in Directory.GetFiles(exePath, "*svchost*"))
+                    foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Moves watchdog to C:\Windows to prevent closure via console.
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)), true);
                 }
                 catch (IOException) { }
@@ -136,10 +136,10 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
-            CheckExpiration();
+            ExpirationCheck();
             filePadlocks.Add(new FileStream(config.File, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents closure via deleting critical files.
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isEnforcerActive)
             {
@@ -150,26 +150,25 @@ namespace Enforcer
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     using var taskService = new TaskService();
-                    var taskFolder = GetTaskFolder(taskService);
-                    taskFolder.DeleteTask("SvcStartup", false);
+                    GetTaskFolder(taskService).DeleteTask("SvcStartup", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     SetCleanBrowsingDNS();
-                    RegisterTask("SvcStartup");
+                    RegisterTask("SvcStartup"); // Creates Windows task to reopen SafeSurf on system restart.
                     Thread.Sleep(4000);
                 }
             }
         }
 
-        void CheckExpiration()
+        void ExpirationCheck()
         {
             DateTime? networkDateTime = null;
             try
             {
                 using var tcpClient = new TcpClient();
-                if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500))
+                if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500)) // Network time prevents closure via date settings.
                 {
                     using var streamReader = new StreamReader(tcpClient.GetStream());
                     networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
@@ -181,7 +180,7 @@ namespace Enforcer
             if (!expirationTimer.Enabled && !isExpired)
             {
                 expirationTimer.AutoReset = true;
-                expirationTimer.Elapsed += (_, _) => CheckExpiration();
+                expirationTimer.Elapsed += (_, _) => ExpirationCheck();
                 expirationTimer.Start();
             }
         }
