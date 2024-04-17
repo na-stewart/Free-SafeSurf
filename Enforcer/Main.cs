@@ -98,7 +98,7 @@ namespace Enforcer
                         watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*")) // Prevents closure by deleting critical files.
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*")) // Prevents deletion of critical files.
                 filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
@@ -139,7 +139,7 @@ namespace Enforcer
             ExpirationCheck();
             filePadlocks.Add(new FileStream(config.File, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents closure by deleting critical files.
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents deletion of critical files.
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isEnforcerActive)
             {
