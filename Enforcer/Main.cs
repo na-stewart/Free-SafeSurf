@@ -134,7 +134,7 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
-            ExpirationCheck();                   
+            ExpirationCheck();
             while (isEnforcerActive)
             {
                 if (isExpired)
@@ -150,7 +150,7 @@ namespace Enforcer
                 else
                 {
                     InitalizeFilePermissions(); // Prevents closure via permissions override and restart.
-                    RegisterDaemonTask(); // Windows task opens SafeSurf on login.
+                    RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
                     SetCleanBrowsingDnsFilter();
                     Thread.Sleep(4000);
                 }
@@ -226,14 +226,11 @@ namespace Enforcer
 
         void InitalizeFilePermissions()
         {
-            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory(), windowsPath })
-            {
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))        
                     SetFilePermissions(file);
-                if (path == windowsPath)
-                    foreach (var file in Directory.GetFiles(path, "*svchost*"))
-                        SetFilePermissions(file);
-            }
+            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
+                SetFilePermissions(file);
         }
 
         void SetFilePermissions(string path)
@@ -244,24 +241,24 @@ namespace Enforcer
             fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
             fileSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Allow));
             file.SetAccessControl(fileSecurity);
-            if(!filePadlocks.Any(fileStream => fileStream.Name == path)) 
+            if (!filePadlocks.Any(fileStream => fileStream.Name == path))
                 filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
         }
 
-        void RegisterDaemonTask()
+        void RegisterTask(string name)
         {
             using var taskService = new TaskService();
             var taskFolder = GetTaskFolder(taskService);
-            taskFolder.DeleteTask("SvcStartup", false);
+            taskFolder.DeleteTask(name, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation"; // Daemon startup task disguised to prevent deletion.
+            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation"; // Disguised to prevent deletion.
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
             taskDefinition.Triggers.Add(new LogonTrigger());
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
-            taskFolder.RegisterTaskDefinition("SvcStartup", taskDefinition);
+            taskFolder.RegisterTaskDefinition(name, taskDefinition);
         }
 
         TaskFolder GetTaskFolder(TaskService taskService)
