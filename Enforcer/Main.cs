@@ -239,7 +239,6 @@ namespace Enforcer
             var fileSecurity = file.GetAccessControl();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
             fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
-            fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.ReadAndExecute, AccessControlType.Deny));
             fileSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.ReadAndExecute, AccessControlType.Allow));
             file.SetAccessControl(fileSecurity);
             if (!filePadlocks.Exists(fileStream => fileStream.Name.Equals(path)))
