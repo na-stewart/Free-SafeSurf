@@ -239,7 +239,7 @@ namespace Enforcer
             var fileSecurity = file.GetAccessControl();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
             fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
-            fileSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.ReadAndExecute, AccessControlType.Allow));
+            fileSecurity.SetAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.ReadAndExecute, AccessControlType.Allow));
             file.SetAccessControl(fileSecurity);
             if (!filePadlocks.Exists(fileStream => fileStream.Name.Equals(path)))
                 filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
