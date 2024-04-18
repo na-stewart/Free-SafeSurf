@@ -46,7 +46,6 @@ namespace Enforcer
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
-        readonly string executorPath;
         readonly string daemonPath;
         bool isEnforcerActive;
         Process watchdog;
@@ -57,7 +56,6 @@ namespace Enforcer
             InitializeComponent();
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
-            executorPath = Path.Combine(exePath, "SSExecutor.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
                 SetHostsFilter();
@@ -100,14 +98,12 @@ namespace Enforcer
                         watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*")) // Prevents deletion of critical files.
-                filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
         int StartWatchdog()
         {
             using Process executor = new();
-            executor.StartInfo.FileName = executorPath;
+            executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
             executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} \"{exePath}\"";
             executor.StartInfo.CreateNoWindow = true;
             executor.StartInfo.RedirectStandardOutput = true;
@@ -130,7 +126,7 @@ namespace Enforcer
                 {
                     File.WriteAllText(hosts, File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
                     if (isEnforcerActive)
-                        filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read));
+                        filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
                 }
             }
             catch (IOException) { }
@@ -138,10 +134,7 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
-            ExpirationCheck();
-            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories)) // Prevents deletion of critical files.
-                    filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
+            ExpirationCheck();                   
             while (isEnforcerActive)
             {
                 if (isExpired)
@@ -156,8 +149,7 @@ namespace Enforcer
                 }
                 else
                 {
-                    foreach (string path in new string[] { daemonPath, watchdogPath, executorPath }) // Prevents closure via permissions override and restart.
-                        SetFilePermissions(path);
+                    InitalizeFilePermissions();
                     RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
                     SetCleanBrowsingDnsFilter();
                     Thread.Sleep(4000);
@@ -232,6 +224,17 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
+        void InitalizeFilePermissions()
+        {
+            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
+            {
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))         
+                    SetFilePermissions(file);
+                foreach (var file in Directory.GetFiles(path, "*svchost*"))
+                    SetFilePermissions(file);
+            }
+        }
+
         void SetFilePermissions(string path)
         {
             var file = new FileInfo(path);
@@ -240,6 +243,8 @@ namespace Enforcer
             fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
             fileSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Allow));
             file.SetAccessControl(fileSecurity);
+            if(!filePadlocks.Any(fileStream => fileStream.Name == path)) 
+                filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
         }
 
         void RegisterTask(string name)
