@@ -107,13 +107,20 @@ namespace UI
                     if (!option.IsExecutable())
                         config.Write(option.Name, option.ToString());
                 if (!options[2].ToString().Equals("0"))
+                {
+                    if (options[0].ToString().Equals("off") && options[1].ToString().Equals("off"))
+                    {
+                        notification = "Atleast one filter must be configured for enforcer activation.";
+                        return;
+                    }
                     config.Write("date-enforced", DateTime.Now.ToString());
-                notification = "SafeSurf settings applied!"; 
-                Process process = new(); // Instances started in a seperate path from the active enforcer are ignored.
+                } 
+                notification = "SafeSurf settings applied!";
+                Process process = new(); 
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
-                process.Start();
+                process.Start(); // Enforcer instances started in a seperate path from an active enforcer are ignored.
             }
             catch (IOException) 
             {

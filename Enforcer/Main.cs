@@ -75,7 +75,8 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-            AddDefenderExclusion(watchdogPath.Replace("exe", "dll"));
+            AddDefenderExclusion(watchdogPath.Replace(".exe", ".dll"));
+            AddDefenderExclusion(watchdogPath);
             if (args.Length > 0)
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
@@ -152,7 +153,7 @@ namespace Enforcer
                     ApplyFileLocks(); // Prevents closure via permissions override and restart.
                     RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
                     ApplyCleanBrowsingDnsFilter();
-                    Thread.Sleep(4000);
+                    Thread.Sleep(1000);
                 }
             }
         }
