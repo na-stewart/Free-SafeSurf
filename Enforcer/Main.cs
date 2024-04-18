@@ -226,11 +226,11 @@ namespace Enforcer
 
         void InitalizeFilePermissions()
         {
-            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))        
-                    SetFilePermissions(file);
             foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
                 SetFilePermissions(file);
+            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))        
+                    SetFilePermissions(file);    
         }
 
         void SetFilePermissions(string path)
