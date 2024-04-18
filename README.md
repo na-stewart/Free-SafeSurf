@@ -52,14 +52,14 @@ This program will ***only*** be available for download on this repository. Any i
 <ins>Before activation, make sure you understand what each setting does.</ins>
 
 ### Hosts Filter
-Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the user's request to visit the site. The main drawback is that some content may fall through the cracks if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
+Operating system level content filtering is implemented via a hosts file which is used to map a connection between an IP address and domain name. SafeSurf routes A massive amount of questionable domains to `0.0.0.0` to reject the user's request to visit the site. The main drawback is that some content may break through if a domain is not yet registered with SafeSurf and may not be as accurate as CleanBrowsing. 
 
 - Adult: Rejects all questionable adult content.
 - Gambling: Rejects all online gambling sites and questionable adult content.
 - Family: Rejects all questionable adult content as well as mixed content sites (like Reddit).
 
 ### CleanBrowsing DNS Filter
-Network level content filtering is implemented via a service called [CleanBrowsing](https://cleanbrowsing.org/) which provides free, private DNS addresses that effectively reject questionable content. The main drawback is that setting a custom DNS on Windows may lead to connectivity issues depending on your internet service provider. Some users may be uncomfortable funneling all network activity through CleanBrowsing, be sure to read their [privacy policy](https://cleanbrowsing.org/privacy) and investigate further.
+Network level content filtering is implemented via a service called [CleanBrowsing](https://cleanbrowsing.org/) which provides free, private DNS addresses that effectively reject questionable content. The main drawback is that setting a custom DNS on Windows may lead to connectivity issues depending on your internet service provider. Some users may be uncomfortable funneling network activity through CleanBrowsing, be sure to read their [privacy policy](https://cleanbrowsing.org/privacy) and investigate further.
 
 - Adult: Rejects all questionable adult content.
 - Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
