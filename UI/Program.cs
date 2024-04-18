@@ -45,13 +45,13 @@ namespace UI
         static void Main()
         {
             Console.Title = "SafeSurf";
-            Process.Start(new ProcessStartInfo("powershell") // Prevents closure via Windows Defender.
+            Process.Start(new ProcessStartInfo("powershell") 
             {
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
-            }); 
+            }); // Prevents closure via Windows Defender.
             while (true)
             {
                 PrintNav();
@@ -108,8 +108,8 @@ namespace UI
                         config.Write(option.Name, option.ToString());
                 if (!options[2].ToString().Equals("0"))
                     config.Write("date-enforced", DateTime.Now.ToString());
-                notification = "SafeSurf settings applied!";
-                Process process = new();
+                notification = "SafeSurf settings applied!"; 
+                Process process = new(); // Instances started in a seperate path from the active enforcer are ignored.
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";

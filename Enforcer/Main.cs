@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
+using System.Security.Principal;
 using Task = System.Threading.Tasks.Task;
 using Timer = System.Timers.Timer;
 
@@ -65,9 +66,9 @@ namespace Enforcer
                 isEnforcerActive = true;
                 AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
-                SetHostsFilter();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active."); // Prevents closure via logout.
-                InitializeEnforcer();  // Applies SafeSurf settings repeatedly to prevent circumvention.
+                SetHostsFilter();      
+                InitializeEnforcer(); // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
             Environment.Exit(0);
         }
@@ -137,7 +138,7 @@ namespace Enforcer
         {
             ExpirationCheck();
             foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents deletion of critical files.
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories)) // Prevents deletion of critical files.
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
             while (isEnforcerActive)
             {
@@ -154,7 +155,7 @@ namespace Enforcer
                 else
                 {
                     SetDaemonFilePermissions(); // Prevents closure via permissions override and restart.
-                    RegisterTask("SvcStartup"); // Creates Windows task to reopen SafeSurf on system restart.
+                    RegisterTask("SvcStartup"); // Windows task opens SafeSurf on Windows login.
                     SetCleanBrowsingDnsFilter();   
                     Thread.Sleep(4000);
                 }
@@ -232,7 +233,9 @@ namespace Enforcer
         {
             var daemon = new FileInfo(daemonPath);
             var daemonSecurity = daemon.GetAccessControl();
-            daemonSecurity.RemoveAccessRule(new FileSystemAccessRule("NT AUTHORITY\\SYSTEM", FileSystemRights.FullControl, AccessControlType.Deny));
+            var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
+            daemonSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
+            daemonSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Allow));
             daemon.SetAccessControl(daemonSecurity);
         }
 
