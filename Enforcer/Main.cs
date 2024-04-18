@@ -241,7 +241,7 @@ namespace Enforcer
             fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
             fileSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Allow));
             file.SetAccessControl(fileSecurity);
-            if (!filePadlocks.Any(fileStream => fileStream.Name == path))
+            if (!filePadlocks.Exists(fileStream => fileStream.Name == path))
                 filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
         }
 
