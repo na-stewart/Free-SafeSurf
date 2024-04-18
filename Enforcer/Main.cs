@@ -1,11 +1,13 @@
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO.Pipes;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using Task = System.Threading.Tasks.Task;
 using Timer = System.Timers.Timer;
 
@@ -37,9 +39,6 @@ namespace Enforcer
 {
     public partial class Main : Form
     {
-        [LibraryImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Timer expirationTimer = new(86400000);
@@ -47,7 +46,7 @@ namespace Enforcer
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
         readonly string daemonPath;
-        bool isEnforcerActive = true;
+        bool isEnforcerActive;
         Process watchdog;
         bool isExpired;
 
@@ -58,15 +57,15 @@ namespace Enforcer
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
-                isEnforcerActive = false; // Applies SafeSurf settings once.
-                SetHosts();
-                SetCleanBrowsingDNS();
-            }
-            else // Enforcer is activated.
+                SetHostsFilter();
+                SetCleanBrowsingDnsFilter();
+            }        
+            else 
             {
+                isEnforcerActive = true;
                 AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
-                InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.
-                SetHosts();
+                InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
+                SetHostsFilter();
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active."); // Prevents closure via logout.
                 InitializeEnforcer();  // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
@@ -82,7 +81,7 @@ namespace Enforcer
             {
                 try
                 {
-                    foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Moves watchdog to C:\Windows to prevent closure via console.
+                    foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Moves watchdog to prevent closure via console.
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)), true);
                 }
                 catch (IOException) { }
@@ -114,7 +113,7 @@ namespace Enforcer
             return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
 
-        void SetHosts()
+        void SetHostsFilter()
         {
             var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
             try
@@ -137,7 +136,6 @@ namespace Enforcer
         void InitializeEnforcer()
         {
             ExpirationCheck();
-            filePadlocks.Add(new FileStream(config.File, FileMode.Open, FileAccess.Read, FileShare.Read));
             foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
                 foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))  // Prevents deletion of critical files.
                     filePadlocks.Add(new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -155,8 +153,9 @@ namespace Enforcer
                 }
                 else
                 {
-                    SetCleanBrowsingDNS();
+                    SetDaemonFilePermissions(); // Prevents closure via permissions override and restart.
                     RegisterTask("SvcStartup"); // Creates Windows task to reopen SafeSurf on system restart.
+                    SetCleanBrowsingDnsFilter();   
                     Thread.Sleep(4000);
                 }
             }
@@ -168,13 +167,13 @@ namespace Enforcer
             try
             {
                 using var tcpClient = new TcpClient();
-                if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500)) // Network time prevents closure via date settings.
+                if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500)) // Network time prevents closure via system date override.
                 {
                     using var streamReader = new StreamReader(tcpClient.GetStream());
                     networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
                 }
             }
-            catch (SocketException) { }
+            catch (AggregateException) { }
             DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
             isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
             if (!expirationTimer.Enabled && !isExpired)
@@ -185,7 +184,7 @@ namespace Enforcer
             }
         }
 
-        void SetCleanBrowsingDNS()
+        void SetCleanBrowsingDnsFilter()
         {
             try
             {
@@ -229,6 +228,14 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
+        void SetDaemonFilePermissions()
+        {
+            var daemon = new FileInfo(daemonPath);
+            var daemonSecurity = daemon.GetAccessControl();
+            daemonSecurity.RemoveAccessRule(new FileSystemAccessRule("NT AUTHORITY\\SYSTEM", FileSystemRights.FullControl, AccessControlType.Deny));
+            daemon.SetAccessControl(daemonSecurity);
+        }
+
         void RegisterTask(string name)
         {
             using var taskService = new TaskService();
@@ -236,8 +243,7 @@ namespace Enforcer
             taskFolder.DeleteTask(name, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-            // Disguised as a service task to prevent deletion.
-            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation";
+            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation"; // Disguised to prevent deletion.
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
@@ -268,6 +274,10 @@ namespace Enforcer
             powershell.StartInfo.Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'";
             powershell.Start();
         }
+
+        [LibraryImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool ShutdownBlockReasonCreate(IntPtr hWnd, [MarshalAs(UnmanagedType.LPWStr)] string pwszReason);
 
         protected override void WndProc(ref Message aMessage)
         {

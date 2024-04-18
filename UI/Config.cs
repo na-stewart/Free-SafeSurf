@@ -29,7 +29,7 @@ namespace UI
 {
     internal class Config
     {
-        readonly string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SafeSurf.config");
+        readonly string path = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "SafeSurf.config");
         readonly XmlDocument xml = new();
         static Config? instance = null;
 
