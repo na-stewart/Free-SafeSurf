@@ -46,6 +46,7 @@ namespace Enforcer
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
+        readonly string executorPath;
         readonly string daemonPath;
         bool isEnforcerActive;
         Process watchdog;
@@ -56,18 +57,19 @@ namespace Enforcer
             InitializeComponent();
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
+            executorPath = Path.Combine(exePath, "SSExecutor.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
                 SetHostsFilter();
                 SetCleanBrowsingDnsFilter();
-            }        
-            else 
+            }
+            else
             {
                 isEnforcerActive = true;
                 AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active."); // Prevents closure via logout.
-                SetHostsFilter();      
+                SetHostsFilter();
                 InitializeEnforcer(); // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
             Environment.Exit(0);
@@ -105,7 +107,7 @@ namespace Enforcer
         int StartWatchdog()
         {
             using Process executor = new();
-            executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
+            executor.StartInfo.FileName = executorPath;
             executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} \"{exePath}\"";
             executor.StartInfo.CreateNoWindow = true;
             executor.StartInfo.RedirectStandardOutput = true;
@@ -154,9 +156,10 @@ namespace Enforcer
                 }
                 else
                 {
-                    SetDaemonFilePermissions(); // Prevents closure via permissions override and restart.
+                    foreach (string path in new string[] { daemonPath, watchdogPath, executorPath }) // Prevents closure via permissions override and restart.
+                        SetFilePermissions(path);
                     RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
-                    SetCleanBrowsingDnsFilter();   
+                    SetCleanBrowsingDnsFilter();
                     Thread.Sleep(4000);
                 }
             }
@@ -229,9 +232,9 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void SetDaemonFilePermissions()
+        void SetFilePermissions(string path)
         {
-            var daemon = new FileInfo(daemonPath);
+            var daemon = new FileInfo(path);
             var daemonSecurity = daemon.GetAccessControl();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
             daemonSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
