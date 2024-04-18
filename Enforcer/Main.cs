@@ -155,7 +155,7 @@ namespace Enforcer
                 else
                 {
                     SetDaemonFilePermissions(); // Prevents closure via permissions override and restart.
-                    RegisterTask("SvcStartup"); // Windows task opens SafeSurf on Windows login.
+                    RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
                     SetCleanBrowsingDnsFilter();   
                     Thread.Sleep(4000);
                 }
