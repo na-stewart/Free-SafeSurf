@@ -58,8 +58,8 @@ namespace Enforcer
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
             if (config.Read("days-enforced").Equals("0"))
             {
-                SetHostsFilter();
-                SetCleanBrowsingDnsFilter();
+                ApplyHostsFilter();
+                ApplyCleanBrowsingDnsFilter();
             }
             else
             {
@@ -67,7 +67,7 @@ namespace Enforcer
                 AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
-                SetHostsFilter();
+                ApplyHostsFilter();
                 InitializeEnforcer(); // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
             Environment.Exit(0);
@@ -112,7 +112,7 @@ namespace Enforcer
             return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
 
-        void SetHostsFilter()
+        void ApplyHostsFilter()
         {
             var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
             try
@@ -151,7 +151,7 @@ namespace Enforcer
                 {
                     InitalizeFileLocks(); // Prevents closure via permissions override and restart.
                     RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
-                    SetCleanBrowsingDnsFilter();
+                    ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(4000);
                 }
             }
@@ -180,7 +180,7 @@ namespace Enforcer
             }
         }
 
-        void SetCleanBrowsingDnsFilter()
+        void ApplyCleanBrowsingDnsFilter()
         {
             try
             {
