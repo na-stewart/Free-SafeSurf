@@ -149,7 +149,7 @@ namespace Enforcer
                 }
                 else
                 {
-                    InitalizeFilePermissions(); // Prevents closure via permissions override and restart.
+                    InitalizeFileLocks(); // Prevents closure via permissions override and restart.
                     RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
                     SetCleanBrowsingDnsFilter();
                     Thread.Sleep(4000);
@@ -224,7 +224,7 @@ namespace Enforcer
                 a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
         }
 
-        void InitalizeFilePermissions()
+        void InitalizeFileLocks()
         {
             foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
                 SetFilePermissions(file);
