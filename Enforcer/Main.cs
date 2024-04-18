@@ -234,12 +234,12 @@ namespace Enforcer
 
         void SetFilePermissions(string path)
         {
-            var daemon = new FileInfo(path);
-            var daemonSecurity = daemon.GetAccessControl();
+            var file = new FileInfo(path);
+            var fileSecurity = file.GetAccessControl();
             var everyone = new SecurityIdentifier(WellKnownSidType.WorldSid, null);
-            daemonSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
-            daemonSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Allow));
-            daemon.SetAccessControl(daemonSecurity);
+            fileSecurity.RemoveAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Deny));
+            fileSecurity.AddAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.FullControl, AccessControlType.Allow));
+            file.SetAccessControl(fileSecurity);
         }
 
         void RegisterTask(string name)
