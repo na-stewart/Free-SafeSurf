@@ -34,7 +34,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-SafeSurf for Windows can protect you and your loved ones from harmful materials online.
+SafeSurf for Windows can protect from harmful materials online.
 
 Bypass prevention prevents the user from disabling the filter or making changes to settings for a certain period of time.
 
