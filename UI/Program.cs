@@ -120,7 +120,7 @@ namespace UI
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
                 process.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\"";
-                process.Start(); // Enforcer instances started in a seperate path from an active enforcer are ignored.
+                process.Start(); // Instances started in a separate path from an active enforcer are ignored.
             }
             catch (IOException) 
             {

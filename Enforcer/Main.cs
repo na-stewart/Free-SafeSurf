@@ -42,7 +42,7 @@ namespace Enforcer
     {
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        readonly Timer expirationTimer = new(86400000);
+        readonly Timer expirationTimer = new(3600000);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
@@ -83,7 +83,7 @@ namespace Enforcer
             {
                 try
                 {
-                    foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Moves watchdog to prevent closure via console.
+                    foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog moved to prevent closure via console.
                         File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)), true);
                 }
                 catch (IOException) { }
@@ -170,7 +170,7 @@ namespace Enforcer
                     networkDateTime = DateTime.ParseExact(streamReader.ReadToEnd().Substring(7, 17), "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
                 }
             }
-            catch (AggregateException) { }
+            catch (SocketException) { }
             DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
             isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
             if (!expirationTimer.Enabled && !isExpired)
@@ -231,7 +231,7 @@ namespace Enforcer
                 SetFilePermissions(file);
             foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
                 foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))        
-                    SetFilePermissions(file);    
+                    SetFilePermissions(file);  
         }
 
         void SetFilePermissions(string path)
@@ -253,7 +253,7 @@ namespace Enforcer
             taskFolder.DeleteTask(name, false);
             var taskDefinition = taskService.NewTask();
             taskDefinition.Settings.DisallowStartIfOnBatteries = false;
-            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation"; // Disguised to prevent deletion.
+            taskDefinition.RegistrationInfo.Author = "Microsoft Corporation"; // Disguised as a Windows task to prevent deletion.
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
