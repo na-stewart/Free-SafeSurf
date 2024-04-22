@@ -80,7 +80,7 @@ If necessary, set up an "accountability partner" account that would act as the a
 including yourself if needed. The password for the account would then be disclosed to someone entrusted to provide the password/permissions only when required.
 
 ### SafeSurf is being detected as a virus.
-For transparency, it's important to disclose that SafeSurf may potentially be detected as a virus due it's anti-circumvention measures and because it is not yet registered with a publisher. To reiterate, this is not a malicious program. This can be solved by making exceptions for SafeSurf executables as they are detected with your respective antivirus.
+For transparency, it's important to disclose that SafeSurf may potentially be detected as a virus due it's anti-circumvention measures and because it is not yet registered with a publisher. To reiterate, this is not a malicious program. Issue can be solved by making exceptions for SafeSurf executables as they are detected with your respective antivirus.
 
 ### Help!
 If you experience any problems with SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
