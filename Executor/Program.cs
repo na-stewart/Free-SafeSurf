@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.IO;
 
 namespace Executor
 {
@@ -8,7 +10,8 @@ namespace Executor
         {
             Process process = new Process();
             process.StartInfo.FileName = args[0];
-            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            if (args.Length > 1)
+                process.StartInfo.Arguments = args[1];
             process.Start();
             Console.WriteLine(process.Id);
             Environment.Exit(0);
