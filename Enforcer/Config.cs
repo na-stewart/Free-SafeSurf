@@ -61,7 +61,7 @@ namespace Enforcer
 
         public bool HasExpired()
         {
-            return Read("date-enforced").Equals("");
+            return Read("date-enforced").Equals(string.Empty);
         }
     }
 }

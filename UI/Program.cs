@@ -39,7 +39,7 @@ namespace UI
             new Option("Execute", Execute),
             new Option("Help", () => Process.Start(new ProcessStartInfo("https://github.com/na-stewart/SafeSurf/blob/master/README.md") { UseShellExecute = true }))
         ];
-        static string notification = "";
+        static string notification = string.Empty;
         static int navIndex = 0;
 
         static void Main()
