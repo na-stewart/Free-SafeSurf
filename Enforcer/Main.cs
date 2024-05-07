@@ -288,7 +288,7 @@ namespace Enforcer
 
         void UpdateDefenderExclusions(bool remove)
         {
-            if (defenderService.Status == ServiceControllerStatus.Running)
+            if (defenderService.Status == ServiceControllerStatus.Running || remove)
             {
                 Process.Start(new ProcessStartInfo("powershell")
                 {
