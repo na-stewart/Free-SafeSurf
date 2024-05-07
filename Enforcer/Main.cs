@@ -49,24 +49,25 @@ namespace Enforcer
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
         readonly string daemonPath;
-        bool isEnforcerActive;
         Process watchdog;
         bool isExpired;
+        bool isActive;
 
         public Main(string[] args)
         {
             InitializeComponent();
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
+            isExpired = config.HasExpired();
             if (config.Read("days-enforced").Equals("0"))
             {
                 ApplyHostsFilter();
                 ApplyCleanBrowsingDnsFilter();
             }
-            else
+            else if (!isExpired)
             {
-                isEnforcerActive = true;
-                AddDefenderExclusions(); // Prevents closure via Windows Defender.
+                isActive = true;
+                UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
                 ApplyHostsFilter();
@@ -93,11 +94,11 @@ namespace Enforcer
             }
             Task.Run(() =>
             {
-                while (isEnforcerActive)
+                while (isActive)
                 {
                     watchdog.WaitForExit();
                     watchdog.Close();
-                    if (isEnforcerActive)
+                    if (isActive)
                         watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
@@ -122,13 +123,13 @@ namespace Enforcer
             {
                 if (config.Read("hosts-filter").Equals("off"))
                 {
-                    if (!isEnforcerActive)
+                    if (!isActive)
                         File.WriteAllText(hosts, string.Empty);
                 }
                 else
                 {
                     File.WriteAllText(hosts, File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
-                    if (isEnforcerActive)
+                    if (isActive)
                         filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
                 }
             }
@@ -138,14 +139,16 @@ namespace Enforcer
         void InitializeEnforcer()
         {
             ExpirationCheck();
-            while (isEnforcerActive)
+            while (isActive)
             {
                 if (isExpired)
                 {
-                    expirationTimer.Stop();
-                    isEnforcerActive = false;
+                    isActive = false;
+                    expirationTimer.Stop();     
+                    UpdateDefenderExclusions(true);
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
+                    config.SetExpired();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
@@ -159,7 +162,7 @@ namespace Enforcer
                     RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1500);
-                    AddDefenderExclusions();
+                    UpdateDefenderExclusions(false);
                 }
             }
         }
@@ -196,7 +199,7 @@ namespace Enforcer
             try
             {
                 string[]? dns;
-                if (!isEnforcerActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
+                if (!isActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
                     dns = null;
                 else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
                     dns = ["185.228.168.168", "185.228.169.168"];
@@ -284,7 +287,7 @@ namespace Enforcer
             return taskFolder;
         }
 
-        void AddDefenderExclusions()
+        void UpdateDefenderExclusions(bool remove)
         {
             if (defenderService.Status == ServiceControllerStatus.Running)
             {
@@ -292,7 +295,7 @@ namespace Enforcer
                 {
                     CreateNoWindow = true,
                     Verb = "runas",
-                    Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
+                    Arguments = $" -Command {(remove ? "Remove" : "Add")}-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
                 });
             }     
         }
