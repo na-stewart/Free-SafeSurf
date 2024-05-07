@@ -134,8 +134,7 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
-            string[] criticalFiles = [exePath, watchdogPath, watchdogPath.Replace(".exe", ".dll")];
-            AddDefenderExclusions(criticalFiles); // Prevents closure via Windows Defender.
+            AddDefenderExclusions(); // Prevents closure via Windows Defender.
             ExpirationCheck();
             while (isEnforcerActive)
             {
@@ -158,7 +157,7 @@ namespace Enforcer
                     RegisterTask("SvcWatchdog", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1000);
-                    AddDefenderExclusions(criticalFiles);
+                    AddDefenderExclusions();
                 }
             }
         }
@@ -280,13 +279,13 @@ namespace Enforcer
             return taskFolder;
         }
 
-        void AddDefenderExclusions(string[] paths)
+        void AddDefenderExclusions()
         {
             Process.Start(new ProcessStartInfo("powershell")
             {
                 CreateNoWindow = true,
                 Verb = "runas",
-                Arguments = $" -Command \"Add-MpPreference -ExclusionPath {string.Join(", ", paths)}"
+                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
             });
         }
 
