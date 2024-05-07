@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.ServiceProcess;
 using Task = System.Threading.Tasks.Task;
 using Timer = System.Timers.Timer;
 
@@ -42,6 +43,7 @@ namespace Enforcer
     {
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        readonly ServiceController defenderService = new ServiceController("WdNisSvc");
         readonly Timer expirationTimer = new(1800000);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
@@ -281,12 +283,15 @@ namespace Enforcer
 
         void AddDefenderExclusions()
         {
-            Process.Start(new ProcessStartInfo("powershell")
+            if (defenderService.Status == ServiceControllerStatus.Running)
             {
-                CreateNoWindow = true,
-                Verb = "runas",
-                Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
-            });
+                Process.Start(new ProcessStartInfo("powershell")
+                {
+                    CreateNoWindow = true,
+                    Verb = "runas",
+                    Arguments = $" -Command Add-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
+                });
+            }     
         }
 
         [LibraryImport("user32.dll")]
