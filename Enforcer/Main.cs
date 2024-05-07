@@ -303,7 +303,7 @@ namespace Enforcer
 
         protected override void WndProc(ref Message aMessage)
         {
-            if (aMessage.Msg == 0x0011)
+            if (aMessage.Msg == 0x0011 || aMessage.Msg == 0x0016)
                 return;
             base.WndProc(ref aMessage);
         }
