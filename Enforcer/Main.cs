@@ -66,6 +66,7 @@ namespace Enforcer
             else
             {
                 isEnforcerActive = true;
+                AddDefenderExclusions(); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
                 ApplyHostsFilter();
@@ -136,7 +137,6 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
-            AddDefenderExclusions(); // Prevents closure via Windows Defender.
             ExpirationCheck();
             while (isEnforcerActive)
             {
