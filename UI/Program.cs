@@ -102,7 +102,7 @@ namespace UI
         {
             try
             {
-                foreach (Option option in options)
+                foreach (var option in options)
                     if (!option.IsExecutable())
                         config.Write(option.Name, option.ToString());
                 if (!options[2].ToString().Equals("0"))

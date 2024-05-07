@@ -78,7 +78,7 @@ namespace Enforcer
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
             {
-                foreach (string file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog copied to prevent closure via console.
+                foreach (var file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog copied to prevent closure via console.
                 {
                     try
                     {
@@ -147,16 +147,16 @@ namespace Enforcer
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
-                    taskFolder.DeleteTask("SvcWatchdog", false);
+                    taskFolder.DeleteTask("SvcHeartbeat", false);
                     watchdog.Kill();
                 }
                 else
                 {
                     ApplyFileLocks(); // Prevents closure via permissions override and restart.
                     RegisterTask("SvcStartup", new LogonTrigger()); // SafeSurf started on login.
-                    RegisterTask("SvcWatchdog", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
+                    RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
-                    Thread.Sleep(1000);
+                    Thread.Sleep(1500);
                     AddDefenderExclusions();
                 }
             }
@@ -202,7 +202,7 @@ namespace Enforcer
                 var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
                 if (currentInterface != null)
                 {
-                    foreach (ManagementObject objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances().Cast<ManagementObject>())
+                    foreach (var objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances().Cast<ManagementObject>())
                     {
                         if ((bool)objMO["IPEnabled"])
                         {
@@ -232,9 +232,9 @@ namespace Enforcer
 
         void ApplyFileLocks()
         {
-            foreach (string file in Directory.GetFiles(windowsPath, "*svchost*"))
+            foreach (var file in Directory.GetFiles(windowsPath, "*svchost*"))
                 SetFilePermissions(file);
-            foreach (string path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
+            foreach (var path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
                 foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))        
                     SetFilePermissions(file);  
         }
