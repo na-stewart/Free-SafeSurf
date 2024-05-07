@@ -143,8 +143,7 @@ namespace Enforcer
                 if (isExpired)
                 {
                     isActive = false;
-                    expirationTimer.Stop();     
-                    UpdateDefenderExclusions(true);
+                    expirationTimer.Stop();               
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     config.SetExpired();
@@ -152,7 +151,8 @@ namespace Enforcer
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
                     taskFolder.DeleteTask("SvcHeartbeat", false);
-                    watchdog.Kill();
+                    UpdateDefenderExclusions(true);
+                    watchdog.Kill();              
                 }
                 else
                 {
