@@ -70,7 +70,7 @@ namespace UI
         public string Read(string key)
         {
             var node = xml.DocumentElement.SelectSingleNode(key.ToLower().Replace(" ", "-"));
-            return node != null ? node.InnerText : "";
+            return node != null ? node.InnerText : string.Empty;
         }
     }
 }
