@@ -47,7 +47,7 @@ SafeSurf has been designed to be simple to use, just download the most recent ve
 
 May require installation of [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
-This program will ***only*** be available for download on this repository. Any instances found elsewhere may be malicious.
+This program will ***only*** be available for download on this repository and instances found elsewhere may be malicious.
 
 <ins>Before activation, make sure you understand what each setting does.</ins>
 
@@ -80,10 +80,10 @@ If necessary, set up an "accountability partner" account that would act as the a
 including yourself if needed. The password for the account would then be disclosed to someone entrusted to provide the password/permissions only when required.
 
 ### SafeSurf is being detected as a virus.
-For transparency, it's important to disclose that SafeSurf may potentially be detected as a virus due it's anti-circumvention measures and because it is not yet registered with a publisher. To reiterate, this is not a malicious program. Can be fixed by making exceptions for SafeSurf executables as they are detected with your respective antivirus.
+For transparency, it's important to disclose that SafeSurf may potentially be detected as a virus due it's anti-circumvention measures and because it is not yet registered with a publisher. To reiterate, this is not a malicious program. Able to be fixed by making exceptions for SafeSurf executables as they are detected with your respective antivirus.
 
 ### Help!
-If you experience any problems with SafeSurf, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
+If you experience any other problems, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
 
 <!-- CONTRIBUTING -->
 ## Contributing
