@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-// Watchdog disguised as a Windows service host process to prevent closure via console.
+// Watchdog disguised as a Windows process to prevent closure via console.
 [assembly: AssemblyTitle("Host Process for Windows Services")]
 [assembly: AssemblyDescription("Host Process for Windows Services")]
 [assembly: AssemblyProduct("Microsoft® Windows® Operating System")]

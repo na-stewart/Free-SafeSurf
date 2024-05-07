@@ -34,7 +34,7 @@ namespace Executor
             process.StartInfo.FileName = args[0];
             if (args.Length > 1)
                 process.StartInfo.Arguments = string.Join(" ", args, 1, args.Length - 1);
-            process.Start(); // Starts desired process as child of executor.
+            process.Start(); // Starts desired process as child of executor (default behavior).
             Console.WriteLine(process.Id);
             Environment.Exit(0); // Quits to detach child process so it runs independently, prevents closure via Task Manager.
         }
