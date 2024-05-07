@@ -43,7 +43,7 @@ namespace Enforcer
     {
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        readonly ServiceController defenderService = new ServiceController("WdNisSvc");
+        readonly ServiceController defenderService = new("WdNisSvc");
         readonly Timer expirationTimer = new(1800000);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
