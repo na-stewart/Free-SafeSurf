@@ -55,8 +55,7 @@ namespace Enforcer
 
         public void SetExpired()
         {
-            var node = xml.DocumentElement.SelectSingleNode("date-enforced");
-            node.InnerText = "";
+            xml.DocumentElement.SelectSingleNode("date-enforced").InnerText = "";
             xml.Save(path);
         }
 
