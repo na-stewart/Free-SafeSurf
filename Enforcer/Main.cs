@@ -58,13 +58,12 @@ namespace Enforcer
             InitializeComponent();
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
-            isExpired = config.HasExpired();
             if (config.Read("days-enforced").Equals("0"))
             {
                 ApplyHostsFilter();
                 ApplyCleanBrowsingDnsFilter();
             }
-            else if (!isExpired)
+            else if (!config.HasExpired())
             {
                 isActive = true;
                 UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
