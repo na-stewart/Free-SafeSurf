@@ -98,7 +98,10 @@ namespace Enforcer
                     watchdog.WaitForExit();
                     watchdog.Close();
                     if (isActive)
+                    {
+                        UpdateDefenderExclusions(false);
                         watchdog = Process.GetProcessById(StartWatchdog());
+                    }                 
                 }
             });
         }
@@ -161,7 +164,6 @@ namespace Enforcer
                     RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1500);
-                    UpdateDefenderExclusions(false);
                 }
             }
         }
