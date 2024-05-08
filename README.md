@@ -65,7 +65,7 @@ Network level content filtering is implemented via a service called [CleanBrowsi
 - Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
   
 ### Days Enforced
-This setting will initiate the SafeSurf enforcer (for all local accounts) which prevents circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, SafeSurf settings cannot be overridden until it expires. It is recommended to find what configuration works well for you before enabling the enforcer.
+This setting will initiate the SafeSurf enforcer (for all local accounts) which prevents filter circumvention. It has been designed to be difficult for technical and non-technical users to get around. Once activated, SafeSurf settings cannot be overridden until it expires. It is recommended to find what configuration works well for you before enabling the enforcer.
 
 ## Troubleshooting
 
@@ -73,7 +73,7 @@ This setting will initiate the SafeSurf enforcer (for all local accounts) which 
 In the instance that SafeSurf causes connectivity issues, it is recommended to utilize the Windows network adapter troubleshooter. This will in most cases fix your connectivity issues.
 
 ### Why does SafeSurf ask for administrator priviliges?
-Functionality including custom DNS, manipulating the hosts file, and some anti-circumvention measures require elevation to function.
+Functionality including manipulating DNS and hosts as well as some anti-circumvention measures require elevation to function.
 
 ### Accountability Partner
 If necessary, set up an "accountability partner" account that would act as the adminstrator of your device. Next remove administrator privileges from other users, 
