@@ -9,7 +9,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
-using System.ServiceProcess;
 using Task = System.Threading.Tasks.Task;
 using Timer = System.Timers.Timer;
 
@@ -65,7 +64,6 @@ namespace Enforcer
             else if (!config.HasExpired())
             {
                 isActive = true;
-                UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
                 ApplyHostsFilter();
@@ -80,6 +78,7 @@ namespace Enforcer
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
             {
+                UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                 foreach (var file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog copied to prevent closure via console.
                 {
                     try
