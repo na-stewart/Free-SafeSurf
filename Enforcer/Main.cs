@@ -1,3 +1,4 @@
+using Microsoft.Win32;
 using Microsoft.Win32.TaskScheduler;
 using System.Diagnostics;
 using System.Globalization;
@@ -43,7 +44,6 @@ namespace Enforcer
         readonly string windowsPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
         readonly string? exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         readonly Timer expirationTimer = new(1800000);
-        readonly Timer expirationTimer = new(2000);
         readonly List<FileStream> filePadlocks = [];
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
@@ -79,7 +79,6 @@ namespace Enforcer
                 watchdog = Process.GetProcessById(int.Parse(args[0]));
             else
             {
-                UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                 foreach (var file in Directory.GetFiles(exePath, "*svchost*")) // Watchdog copied to prevent closure via console.
                 {
                     try
@@ -96,10 +95,7 @@ namespace Enforcer
                 {
                     watchdog.WaitForExit();
                     if (isActive)
-                    {
-                        UpdateDefenderExclusions(false);
-                        watchdog = Process.GetProcessById(StartWatchdog());
-                    }                 
+                        watchdog = Process.GetProcessById(StartWatchdog());         
                 }
             });
         }
@@ -153,15 +149,16 @@ namespace Enforcer
                     taskFolder.DeleteTask("SvcStartup", false);
                     taskFolder.DeleteTask("SvcHeartbeat", false);
                     watchdog.Kill();
-                    UpdateDefenderExclusions(true);                 
+                    UpdateDefenderExclusions(true);
                 }
                 else
                 {
+                    UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                     ApplyFileLocks(); // Prevents closure via permissions override and restart.
                     RegisterTask("SvcStartup", new LogonTrigger()); // SafeSurf started on login.
                     RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
-                    Thread.Sleep(1500);
+                    Thread.Sleep(1000);     
                 }
             }
         }
@@ -288,12 +285,17 @@ namespace Enforcer
 
         void UpdateDefenderExclusions(bool remove)
         {
-            Process.Start(new ProcessStartInfo("powershell")
+            using var exclusionsRegistry = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths");
+            var exclusions = exclusionsRegistry.GetValueNames();
+            if (remove || !exclusions.Contains(exePath) || !exclusions.Contains(watchdogPath) || )
             {
-                CreateNoWindow = true,
-                Verb = "runas",
-                Arguments = $" -Command {(remove ? "Remove" : "Add")}-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
-            }).WaitForExit();
+                Process.Start(new ProcessStartInfo("powershell")
+                {
+                    CreateNoWindow = true,
+                    Verb = "runas",
+                    Arguments = $" -Command {(remove ? "Remove" : "Add")}-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}'"
+                });
+            }
         }
 
         [LibraryImport("user32.dll")]

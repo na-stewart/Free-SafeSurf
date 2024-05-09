@@ -37,12 +37,6 @@ namespace Watchdog
                 while (true) // Prevents closure of enforcer by immediately reopening it.
                 {
                     enforcer.WaitForExit();
-                    Process.Start(new ProcessStartInfo("powershell")
-                    {
-                        CreateNoWindow = true,
-                        Verb = "runas",
-                        Arguments = $" -Command Add-MpPreference -ExclusionPath '{args[1]}'"
-                    }).WaitForExit(); // Prevents closure via Windows Defender.
                     enforcer = Process.GetProcessById(StartDaemon(args[1]));
                 }
             }
