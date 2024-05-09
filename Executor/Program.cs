@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 /*
 MIT License
@@ -30,11 +31,10 @@ namespace Executor
     {
         static void Main(string[] args)
         {
-            using Process process = new(); 
-            process.StartInfo.FileName = args[0];
-            if (args.Length > 1)
-                process.StartInfo.Arguments = string.Join(" ", args, 1, args.Length - 1);
-            process.Start(); // Starts desired process as child of executor (default behavior).
+            var process = Process.Start(new ProcessStartInfo(args[0])
+            {
+                Arguments = args.Length > 1 ? string.Join(" ", args, 1, args.Length - 1) : string.Empty
+            });
             Console.WriteLine(process.Id);
             Environment.Exit(0); // Quits to detach child process so it runs independently, prevents closure via Task Manager.
         }

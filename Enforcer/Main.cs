@@ -94,7 +94,6 @@ namespace Enforcer
                 while (isActive)
                 {
                     watchdog.WaitForExit();
-                    watchdog.Close();
                     if (isActive)
                     {
                         UpdateDefenderExclusions(false);
@@ -106,12 +105,12 @@ namespace Enforcer
 
         int StartWatchdog()
         {
-            using Process executor = new();
-            executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-            executor.StartInfo.Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} \"{exePath}\"";
-            executor.StartInfo.CreateNoWindow = true;
-            executor.StartInfo.RedirectStandardOutput = true;
-            executor.Start();
+            var executor = Process.Start(new ProcessStartInfo(Path.Combine(exePath, "SSExecutor.exe"))
+            {
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                Arguments = $"\"{watchdogPath}\" {Environment.ProcessId} \"{exePath}\""
+            });
             var executorResponse = executor.StandardOutput.ReadLine();
             return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
@@ -293,7 +292,7 @@ namespace Enforcer
                 CreateNoWindow = true,
                 Verb = "runas",
                 Arguments = $" -Command {(remove ? "Remove" : "Add")}-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogPath.Replace(".exe", ".dll")}'"
-            });
+            }).WaitForExit();
         }
 
         [LibraryImport("user32.dll")]

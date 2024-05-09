@@ -37,13 +37,12 @@ namespace Watchdog
                 while (true) // Prevents closure of enforcer by immediately reopening it.
                 {
                     enforcer.WaitForExit();
-                    enforcer.Close();
                     Process.Start(new ProcessStartInfo("powershell")
                     {
                         CreateNoWindow = true,
                         Verb = "runas",
                         Arguments = $" -Command Add-MpPreference -ExclusionPath '{args[1]}'"
-                    }); // Prevents closure via Windows Defender.
+                    }).WaitForExit(); // Prevents closure via Windows Defender.
                     enforcer = Process.GetProcessById(StartDaemon(args[1]));
                 }
             }
@@ -51,12 +50,12 @@ namespace Watchdog
         
         static int StartDaemon(string exePath)
         {
-            using Process executor = new();
-            executor.StartInfo.FileName = Path.Combine(exePath, "SSExecutor.exe");
-            executor.StartInfo.Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}";
-            executor.StartInfo.RedirectStandardOutput = true;
-            executor.StartInfo.CreateNoWindow = true;
-            executor.Start();
+            var executor = Process.Start(new ProcessStartInfo(Path.Combine(exePath, "SSExecutor.exe"))
+            {
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                Arguments = $"\"{Path.Combine(exePath, "SSDaemon.exe")}\" {Process.GetCurrentProcess().Id}",
+            });
             var executorResponse = executor.StandardOutput.ReadLine();
             return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
