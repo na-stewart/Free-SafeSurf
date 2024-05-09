@@ -151,8 +151,8 @@ namespace Enforcer
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
                     taskFolder.DeleteTask("SvcHeartbeat", false);
-                    UpdateDefenderExclusions(true);
-                    watchdog.Kill();              
+                    watchdog.Kill();
+                    UpdateDefenderExclusions(true);                 
                 }
                 else
                 {
