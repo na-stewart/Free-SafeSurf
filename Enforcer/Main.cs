@@ -287,7 +287,7 @@ namespace Enforcer
         {
             using var exclusionsRegistry = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths");
             var exclusions = exclusionsRegistry.GetValueNames();
-            if (remove || !exclusions.Contains(exePath) || !exclusions.Contains(watchdogPath) || )
+            if (remove || !exclusions.Contains(exePath) || !exclusions.Contains(watchdogPath))
             {
                 Process.Start(new ProcessStartInfo("powershell")
                 {
