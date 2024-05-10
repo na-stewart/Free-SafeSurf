@@ -140,14 +140,14 @@ namespace Enforcer
                 if (isExpired)
                 {
                     isActive = false;
-                    expirationTimer.Stop();               
-                    foreach (var filePadlock in filePadlocks)
-                        filePadlock.Close();
+                    expirationTimer.Stop();                                 
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
                     taskFolder.DeleteTask("SvcHeartbeat", false);
                     UpdateDefenderExclusions(true);
+                    foreach (var filePadlock in filePadlocks)
+                        filePadlock.Close();
                     config.SetExpired();
                     watchdog.Kill();                 
                 }
