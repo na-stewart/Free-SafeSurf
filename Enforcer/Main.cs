@@ -143,22 +143,22 @@ namespace Enforcer
                     expirationTimer.Stop();               
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
-                    config.SetExpired();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
                     taskFolder.DeleteTask("SvcHeartbeat", false);
-                    watchdog.Kill();
                     UpdateDefenderExclusions(true);
+                    config.SetExpired();
+                    watchdog.Kill();                 
                 }
                 else
                 {
-                    UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
-                    ApplyFileLocks(); // Prevents closure via permissions override and restart.
+                    UpdateDefenderExclusions(false);
                     RegisterTask("SvcStartup", new LogonTrigger()); // SafeSurf started on login.
                     RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
-                    ApplyCleanBrowsingDnsFilter();
-                    Thread.Sleep(1000);     
+                    ApplyFileLocks(); // Prevents closure via permissions override and restart.
+                    ApplyCleanBrowsingDnsFilter();                        
+                    Thread.Sleep(1000);
                 }
             }
         }
