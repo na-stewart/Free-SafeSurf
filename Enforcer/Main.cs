@@ -48,6 +48,7 @@ namespace Enforcer
         readonly Config config = Config.Instance;
         readonly string watchdogPath;
         readonly string daemonPath;
+        readonly string hostsPath;
         Process watchdog;
         bool isExpired;
         bool isActive;
@@ -55,6 +56,7 @@ namespace Enforcer
         public Main(string[] args)
         {
             InitializeComponent();
+            hostsPath = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
             watchdogPath = Path.Combine(windowsPath, "svchost.exe");
             daemonPath = Path.Combine(exePath, "SSDaemon.exe");
             if (config.Read("days-enforced").Equals("0"))
@@ -66,11 +68,63 @@ namespace Enforcer
             {
                 isActive = true;
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
-                ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
                 ApplyHostsFilter();
                 InitializeEnforcer(); // Applies SafeSurf settings repeatedly to prevent circumvention.
             }
             Environment.Exit(0);
+        }
+
+        void ApplyHostsFilter()
+        {
+            try
+            {
+                if (config.Read("hosts-filter").Equals("off"))
+                {
+                    if (!isActive)
+                        File.WriteAllText(hostsPath, string.Empty);
+                }
+                else
+                    File.WriteAllText(hostsPath, File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
+            }
+            catch (IOException) { }
+        }
+
+        void ApplyCleanBrowsingDnsFilter()
+        {
+            try
+            {
+                string[]? dns;
+                if (!isActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
+                    dns = null;
+                else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
+                    dns = ["185.228.168.168", "185.228.169.168"];
+                else if (config.Read("cleanbrowsing-dns-filter").Equals("adult"))
+                    dns = ["185.228.168.10", "185.228.169.11"];
+                else
+                    return;
+                var currentInterface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(a => a.OperationalStatus == OperationalStatus.Up &&
+                (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
+                a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
+                if (currentInterface != null)
+                {
+                    foreach (var objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances().Cast<ManagementObject>())
+                    {
+                        if ((bool)objMO["IPEnabled"])
+                        {
+                            if (objMO["Description"].Equals(currentInterface.Description))
+                            {
+                                var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
+                                if (objdns != null)
+                                {
+                                    objdns["DNSServerSearchOrder"] = dns;
+                                    objMO.InvokeMethod("SetDNSServerSearchOrder", objdns, null);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (FileLoadException) { }
         }
 
         void InitializeWatchdog(string[] args)
@@ -86,7 +140,7 @@ namespace Enforcer
                         File.Copy(file, Path.Combine(windowsPath, Path.GetFileName(file)));
                     }
                     catch (IOException) { }
-                }    
+                }
                 watchdog = Process.GetProcessById(StartWatchdog());
             }
             Task.Run(() =>
@@ -95,7 +149,7 @@ namespace Enforcer
                 {
                     watchdog.WaitForExit();
                     if (isActive)
-                        watchdog = Process.GetProcessById(StartWatchdog());         
+                        watchdog = Process.GetProcessById(StartWatchdog());
                 }
             });
         }
@@ -112,35 +166,16 @@ namespace Enforcer
             return executorResponse == null ? throw new NullReferenceException("No pid returned from executor.") : int.Parse(executorResponse);
         }
 
-        void ApplyHostsFilter()
-        {
-            var hosts = Path.Combine(windowsPath, "System32\\drivers\\etc\\hosts");
-            try
-            {
-                if (config.Read("hosts-filter").Equals("off"))
-                {
-                    if (!isActive)
-                        File.WriteAllText(hosts, string.Empty);
-                }
-                else
-                {
-                    File.WriteAllText(hosts, File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
-                    if (isActive)
-                        filePadlocks.Add(new FileStream(hosts, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
-                }
-            }
-            catch (IOException) { }
-        }
-
         void InitializeEnforcer()
         {
             ExpirationCheck();
+            ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
             while (isActive)
             {
                 if (isExpired)
                 {
                     isActive = false;
-                    expirationTimer.Stop();                                 
+                    expirationTimer.Stop();
                     using var taskService = new TaskService();
                     var taskFolder = GetTaskFolder(taskService);
                     taskFolder.DeleteTask("SvcStartup", false);
@@ -149,15 +184,15 @@ namespace Enforcer
                     foreach (var filePadlock in filePadlocks)
                         filePadlock.Close();
                     config.SetExpired();
-                    watchdog.Kill();                 
+                    watchdog.Kill();
                 }
                 else
                 {
                     UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
-                    RegisterTask("SvcStartup", new LogonTrigger()); // SafeSurf started on login.
-                    RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
-                    ApplyFileLocks(); // Prevents closure via permissions override and restart.
-                    ApplyCleanBrowsingDnsFilter();                        
+                    ApplyFileLocks(); // Prevents closure via critical file deletion or permissions override.
+                    RegisterTask("SvcStartup", new LogonTrigger());
+                    RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });         
+                    ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1000);
                 }
             }
@@ -190,57 +225,14 @@ namespace Enforcer
             }
         }
 
-        void ApplyCleanBrowsingDnsFilter()
-        {
-            try
-            {
-                string[]? dns;
-                if (!isActive && config.Read("cleanbrowsing-dns-filter").Equals("off"))
-                    dns = null;
-                else if (config.Read("cleanbrowsing-dns-filter").Equals("family"))
-                    dns = ["185.228.168.168", "185.228.169.168"];
-                else if (config.Read("cleanbrowsing-dns-filter").Equals("adult"))
-                    dns = ["185.228.168.10", "185.228.169.11"];
-                else
-                    return;
-                var currentInterface = GetActiveEthernetOrWifiNetworkInterface();
-                if (currentInterface != null)
-                {
-                    foreach (var objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances().Cast<ManagementObject>())
-                    {
-                        if ((bool)objMO["IPEnabled"])
-                        {
-                            if (objMO["Description"].Equals(currentInterface.Description))
-                            {
-                                var objdns = objMO.GetMethodParameters("SetDNSServerSearchOrder");
-                                if (objdns != null)
-                                {
-                                    objdns["DNSServerSearchOrder"] = dns;
-                                    objMO.InvokeMethod("SetDNSServerSearchOrder", objdns, null);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (FileLoadException) { }
-        }
-
-        NetworkInterface? GetActiveEthernetOrWifiNetworkInterface()
-        {
-            return NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(
-                a => a.OperationalStatus == OperationalStatus.Up &&
-                (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
-                a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
-        }
-
         void ApplyFileLocks()
         {
+            SetFilePermissions(hostsPath);
             foreach (var file in Directory.GetFiles(windowsPath, "*svchost*"))
                 SetFilePermissions(file);
             foreach (var path in new string[] { exePath, RuntimeEnvironment.GetRuntimeDirectory() })
-                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))        
-                    SetFilePermissions(file);  
+                foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+                    SetFilePermissions(file);
         }
 
         void SetFilePermissions(string path)
@@ -252,7 +244,7 @@ namespace Enforcer
             fileSecurity.SetAccessRule(new FileSystemAccessRule(everyone, FileSystemRights.ReadAndExecute, AccessControlType.Allow));
             file.SetAccessControl(fileSecurity);
             if (!filePadlocks.Exists(fileStream => fileStream.Name.Equals(path)))
-                filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)); // Prevents deletion of critical file.
+                filePadlocks.Add(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read));
         }
 
         void RegisterTask(string name, Trigger taskTrigger)
