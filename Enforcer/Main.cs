@@ -102,9 +102,10 @@ namespace Enforcer
                     dns = ["185.228.168.10", "185.228.169.11"];
                 else
                     return;
-                var currentInterface = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(a => a.OperationalStatus == OperationalStatus.Up &&
-                (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
-                a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
+                var currentInterface = NetworkInterface.GetAllNetworkInterfaces()
+                    .FirstOrDefault(a => a.OperationalStatus == OperationalStatus.Up &&
+                        (a.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 || a.NetworkInterfaceType == NetworkInterfaceType.Ethernet) &&
+                        a.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily.ToString().Equals("InterNetwork")));
                 if (currentInterface != null)
                 {
                     foreach (var objMO in new ManagementClass("Win32_NetworkAdapterConfiguration").GetInstances().Cast<ManagementObject>())
