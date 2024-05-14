@@ -168,8 +168,8 @@ namespace Enforcer
 
         void InitializeEnforcer()
         {
-            ExpirationCheck();
             ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
+            ExpirationCheck();          
             while (isActive)
             {
                 if (isExpired)
