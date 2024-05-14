@@ -153,7 +153,7 @@ namespace Enforcer
                 }
                 else
                 {
-                    UpdateDefenderExclusions(false);
+                    UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                     RegisterTask("SvcStartup", new LogonTrigger()); // SafeSurf started on login.
                     RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyFileLocks(); // Prevents closure via permissions override and restart.
