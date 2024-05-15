@@ -43,7 +43,7 @@ Privacy friendly as absolutely no data is collected and is completely free and o
 <!-- GETTING STARTED -->
 ## Configuration
 
-SafeSurf has been designed to be simple to use, just download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf`. 
+Download the most recent version from [here](https://github.com/na-stewart/SafeSurf/releases) and run `SafeSurf`. 
 
 May require installation of [.NET Desktop Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
@@ -54,15 +54,15 @@ This program will ***only*** be available for download on this repository and in
 ### Hosts Filter
 Operating system level content filtering is implemented via the hosts file which is configured to map questionable domains to an unreachable IP address. 
 
-- Adult: Rejects all questionable adult content.
-- Gambling: Rejects all online gambling sites and questionable adult content.
-- Family: Rejects all questionable adult content as well as mixed content sites (like Reddit).
+- Adult: Rejects all adult content.
+- Gambling: Rejects all online gambling sites and adult content.
+- Family: Rejects all adult content as well as mixed content sites (like Reddit).
 
 ### CleanBrowsing DNS Filter
 Network level content filtering is implemented via [CleanBrowsing](https://cleanbrowsing.org/) which provides a DNS service that effectively rejects questionable content.
 
-- Adult: Rejects all questionable adult content.
-- Family: Rejects all questionable adult content and blocks access to mixed content sites (like Reddit).
+- Adult: Rejects all adult content.
+- Family: Rejects all adult content and blocks access to mixed content sites (like Reddit).
   
 ### Days Enforced
 This setting will initiate the SafeSurf enforcer (for all local accounts) which prevents filter circumvention. It is recommended to find what configuration works well for you before enabling it.
@@ -70,7 +70,7 @@ This setting will initiate the SafeSurf enforcer (for all local accounts) which 
 ## Troubleshooting
 
 ### I cannot connect to the internet.
-In the instance that SafeSurf causes connectivity issues, it is recommended to utilize the Windows network adapter troubleshooter. This will in most cases fix your connectivity issues.
+If SafeSurf causes connectivity issues, utilize the Windows network adapter troubleshooter.
 
 ### Why does SafeSurf ask for administrator priviliges?
 Functionality including manipulating DNS and hosts as well as some anti-circumvention measures require elevation to function.
@@ -80,7 +80,7 @@ If necessary, set up an "accountability partner" account that would act as the a
 including yourself if needed. The password for the account would then be disclosed to someone entrusted to provide the password/permissions only when required.
 
 ### SafeSurf is being detected as a virus.
-For transparency, it's important to disclose that SafeSurf may potentially be detected as a virus due it's anti-circumvention measures and because it is not yet registered with a publisher. To reiterate, this is not a malicious program. Able to be fixed by making exceptions for SafeSurf executables as they are detected with your respective antivirus.
+SafeSurf may potentially be detected as a virus due it's anti-circumvention measures and because it is not yet registered with a publisher. To reiterate, this is not a malicious program. Able to be fixed by making exceptions for SafeSurf executables as they are detected with your respective antivirus.
 
 ### Help!
 If you experience any other problems, [submit an issue](https://github.com/na-stewart/FreeSafeSurf/issues) or [contact me](https://blog.na-stewart.com/contact).
