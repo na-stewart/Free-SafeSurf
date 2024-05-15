@@ -36,9 +36,7 @@
 
 SafeSurf for Windows can protect from harmful materials online.
 
-Bypass prevention prohibits users from disabling or making changes to settings for a certain period of time.
-
-Privacy friendly as absolutely no data is collected and is completely free and open source.
+Privacy friendly as no data is collected and is completely free and open source.
 
 <!-- GETTING STARTED -->
 ## Configuration
@@ -65,7 +63,7 @@ Network level content filtering is implemented via [CleanBrowsing](https://clean
 - Family: Rejects all adult content and blocks access to mixed content sites (like Reddit).
   
 ### Days Enforced
-This setting will initiate the SafeSurf enforcer (for all local accounts) which prevents filter circumvention. It is recommended to find what configuration works well for you before enabling it.
+This setting will prohibit users from disabling or making changes to SafeSurf for a certain period of time. It is recommended to find what configuration works well for you before enabling it.
 
 ## Troubleshooting
 
