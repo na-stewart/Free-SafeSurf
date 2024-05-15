@@ -280,13 +280,14 @@ namespace Enforcer
         {
             using var exclusionsRegistry = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\Windows Defender\\Exclusions\\Paths");
             var exclusions = exclusionsRegistry.GetValueNames();
-            if (remove || !exclusions.Contains(exePath) || !exclusions.Contains(watchdogPath))
+            var watchdogDllPath = watchdogPath.Replace(".exe", ".dll");
+            if (remove || !exclusions.Contains(exePath) || !exclusions.Contains(watchdogPath) || !exclusions.Contains(watchdogDllPath))
             {
                 Process.Start(new ProcessStartInfo("powershell")
                 {
                     CreateNoWindow = true,
                     Verb = "runas",
-                    Arguments = $" -Command {(remove ? "Remove" : "Add")}-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}'"
+                    Arguments = $" -Command {(remove ? "Remove" : "Add")}-MpPreference -ExclusionPath '{exePath}', '{watchdogPath}', '{watchdogDllPath}'"
                 });
             }
         }
