@@ -67,6 +67,7 @@ namespace Enforcer
             else if (!config.HasExpired())
             {
                 isActive = true;
+                UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
                 InitializeWatchdog(args); // Watchdog prevents closure of enforcer by immediately reopening it.       
                 ApplyHostsFilter();
                 InitializeEnforcer(); // Applies SafeSurf settings repeatedly to prevent circumvention.
@@ -188,13 +189,13 @@ namespace Enforcer
                     watchdog.Kill();
                 }
                 else
-                {
-                    UpdateDefenderExclusions(false); // Prevents closure via Windows Defender.
+                {                
                     ApplyFileLocks(); // Prevents closure via critical file deletion or permissions override.
                     RegisterTask("SvcStartup", new LogonTrigger());
                     RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });         
                     ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1000);
+                    UpdateDefenderExclusions(false);
                 }
             }
         }
