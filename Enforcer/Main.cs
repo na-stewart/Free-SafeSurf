@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Management;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
@@ -77,17 +78,32 @@ namespace Enforcer
 
         void ApplyHostsFilter()
         {
-            try
+            if (config.Read("hosts-filter").Equals("off"))
             {
-                if (config.Read("hosts-filter").Equals("off"))
-                {
-                    if (!isActive)
-                        File.WriteAllText(hostsPath, string.Empty);
-                }
-                else
-                    File.WriteAllText(hostsPath, File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")));
+                if (!isActive)
+                    File.WriteAllText(hostsPath, string.Empty);
             }
-            catch (IOException) { }
+            else
+            {
+                using (HttpClient client = new())
+                {
+                    try
+                    {
+                        using var tcpClient = new TcpClient();
+                        // TODO: Retreive hosts, substring social and apply local version "social.hosts". This prevents the large library of URLS
+                        // being exposed.
+                        if (config.Read("hosts-filter"))
+                        var url = config.Read("hosts-filter").Equals("adult") ? "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" :
+                        if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500)) // Network time prevents closure via system date override.
+                        {
+                            using var streamReader = new StreamReader(tcpClient.GetStream());
+                            File.WriteAllText(hostsPath, streamReader.ReadToEnd());
+
+                        }
+                    }
+                    catch (SocketException) { }
+                }
+            }
         }
 
         void ApplyCleanBrowsingDnsFilter()
