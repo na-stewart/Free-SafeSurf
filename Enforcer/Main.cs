@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO.Pipes;
 using System.Management;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
@@ -78,32 +77,23 @@ namespace Enforcer
 
         void ApplyHostsFilter()
         {
-            if (config.Read("hosts-filter").Equals("off"))
+            try
             {
-                if (!isActive)
-                    File.WriteAllText(hostsPath, string.Empty);
-            }
-            else
-            {
-                using (HttpClient client = new())
+                if (config.Read("hosts-filter").Equals("off"))
                 {
-                    try
-                    {
-                        using var tcpClient = new TcpClient();
-                        // TODO: Retreive hosts, substring social and apply local version "social.hosts". This prevents the large library of URLS
-                        // being exposed.
-                        if (config.Read("hosts-filter"))
-                        var url = config.Read("hosts-filter").Equals("adult") ? "https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" :
-                        if (tcpClient.ConnectAsync("time.nist.gov", 13).Wait(500)) // Network time prevents closure via system date override.
-                        {
-                            using var streamReader = new StreamReader(tcpClient.GetStream());
-                            File.WriteAllText(hostsPath, streamReader.ReadToEnd());
-
-                        }
-                    }
-                    catch (SocketException) { }
+                    if (!isActive)
+                        File.WriteAllText(hostsPath, string.Empty);
                 }
+                else
+                {
+                    var hosts = File.ReadAllText(Path.Combine(exePath, $"{config.Read("hosts-filter")}.hosts")).ToCharArray();
+                    for (int i = 0; i < hosts.Length; i++) // Hosts Caesar cipher decrypted. 
+                        hosts[i] = (char)(hosts[i] - 2);
+                    File.WriteAllText(hostsPath, string.Concat(hosts));
+                }
+                    
             }
+            catch (IOException) { }
         }
 
         void ApplyCleanBrowsingDnsFilter()
@@ -187,7 +177,7 @@ namespace Enforcer
         void InitializeEnforcer()
         {
             ShutdownBlockReasonCreate(Handle, "Enforcer is active, you may sign out anyway."); // Prevents closure via logout.
-            ExpirationCheck();          
+            ExpirationCheck();
             while (isActive)
             {
                 if (isExpired)
@@ -205,10 +195,10 @@ namespace Enforcer
                     watchdog.Kill();
                 }
                 else
-                {                
+                {
                     ApplyFileLocks(); // Prevents closure via critical file deletion or permissions override.
                     RegisterTask("SvcStartup", new LogonTrigger());
-                    RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });         
+                    RegisterTask("SvcHeartbeat", new TimeTrigger() { StartBoundary = DateTime.Now, Repetition = new RepetitionPattern(TimeSpan.FromMinutes(1), TimeSpan.Zero) });
                     ApplyCleanBrowsingDnsFilter();
                     Thread.Sleep(1000);
                     UpdateDefenderExclusions(false);

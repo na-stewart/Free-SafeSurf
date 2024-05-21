@@ -127,5 +127,5 @@ namespace UI
                 notification = $"SafeSurf enforcer is active! No changes may be made until {dateEnforced.AddDays(int.Parse(config.Read("days-enforced"))).ToShortDateString()}.";
             }
         }
-    }
+    } 
 }
