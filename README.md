@@ -13,10 +13,6 @@
   <a href="https://github.com/othneildrew/Best-README-Template">
     <img src="https://github.com/na-stewart/SafeSurf/blob/master/SafeSurf.png" alt="Logo" width="350" height="350">
   </a>
-  <p align="center">
-    Blocks harmful content and prohibits circumvention.
-    <br />
-  </p>
 </div>
 
 <!-- TABLE OF CONTENTS -->
