@@ -28,10 +28,10 @@ namespace UI
     {
         readonly string[]? availableSelections;
         readonly Action? onSelection;
-        string? selection;
+        string? currentSelection;
+        int currentIndex;
         string name;
-        int selectionIndex;
-      
+
         public string Name
         {
             get => name;
@@ -49,19 +49,19 @@ namespace UI
             this.name = name;
             this.availableSelections = availableSelections;
             var indexOfConfigValueInAvailableOptions = Array.IndexOf(availableSelections, Config.Instance.Read(name));
-            selectionIndex = indexOfConfigValueInAvailableOptions > -1 ? indexOfConfigValueInAvailableOptions : 0;
-            selection = availableSelections[selectionIndex];
+            currentIndex = indexOfConfigValueInAvailableOptions > -1 ? indexOfConfigValueInAvailableOptions : 0;
+            currentSelection = availableSelections[currentIndex];
         }
 
         public void Select(ConsoleKeyInfo keyInfo)
         {
             if (availableSelections != null)
             {
-                if (keyInfo.Key == ConsoleKey.LeftArrow && selectionIndex > 0)
-                    selectionIndex--;
-                else if (keyInfo.Key == ConsoleKey.RightArrow && selectionIndex < availableSelections.Length - 1)
-                    selectionIndex++;
-                selection = availableSelections[selectionIndex];
+                if (keyInfo.Key == ConsoleKey.LeftArrow && currentIndex > 0)
+                    currentIndex--;
+                else if (keyInfo.Key == ConsoleKey.RightArrow && currentIndex < availableSelections.Length - 1)
+                    currentIndex++;
+                currentSelection = availableSelections[currentIndex];
             }
             else if (keyInfo.Key == ConsoleKey.Enter)
                 onSelection?.Invoke();
@@ -74,7 +74,7 @@ namespace UI
 
         public override string? ToString()
         {
-            return selection;
+            return currentSelection;
         }
     }
 }
