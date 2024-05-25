@@ -52,7 +52,7 @@ Operating system level content filtering is implemented via the hosts file which
 - Gambling: Rejects all online gambling sites and adult content.
 - Family: Rejects all adult content as well as mixed content sites (like Reddit).
 
-### CleanBrowsing DNS Filter
+### CleanBrowsing DNS Filter (Recommend)
 Network level content filtering is implemented via [CleanBrowsing](https://cleanbrowsing.org/) which provides a DNS service that effectively rejects questionable content.
 
 - Adult: Rejects all adult content.
